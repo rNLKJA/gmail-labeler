@@ -13,3 +13,6 @@ Show: proposed labels, keep/archive decisions, and anything that would be skippe
 ```
 
 Use this to test a new scope or validate label placements before applying.
+
+For **returning runs**, use `in:inbox` scope. For **backfill**, use
+`has:nouserlabels` (see `backfill-gap-fill.md`).

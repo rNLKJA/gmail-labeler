@@ -13,6 +13,11 @@ definition, the mail that actually needs a human.
 The guiding idea: **prefer the user's existing labels, file by provider, archive
 the low-value stuff, keep the records, and never silently lose anything.**
 
+**Two modes:** **First-time setup / backfill** labels mail within a **cutoff window**
+once and generates Gmail filters. **Returning runs** only triage **incoming inbox
+mail**. **Both modes skip threads where the expected label from
+`provider-rules.md` is already applied** — never re-label satisfied mail.
+
 ## What this skill does, in one breath
 
 For each message in scope: figure out who sent it → find (or create) the matching
@@ -89,17 +94,84 @@ sender→label map from scratch.
 4. **Categorise and create provider labels in bulk.** Group providers under the
    right parent. Create missing child labels with `create_label` using the full
    `Parent/Provider` display name. Add new master parents only when no existing
-   parent fits (record the decision in `MEMORY.md`).
+   parent fits (record the decision in `MEMORY.md`). When applying labels within
+   the cutoff window, **skip threads that already carry the expected label** for
+   that sender and content type (see "Rule-satisfied skip").
 5. **Persist the map.** Write every domain → label → keep/archive decision to
    `references/provider-rules.md`. This becomes the seed list for every later run.
    Start from `references/provider-rules.template.md` if the file doesn't exist.
 6. **Generate Gmail filters.** Produce `gmail-filters.xml` and
    `email-receive-rules.md` so future mail auto-categorises without another scan
-   (see "Generating Gmail receive rules" below).
+   (see "Generating Gmail receive rules" below). After the user imports filters,
+   **returning runs should not re-scan historical mail** — only the inbox.
 
 Default to a **dry run** on first use: report the full sender→label plan (including
 which master labels would be created) and ask for confirmation before applying
 labels.
+
+## Returning runs (inbox only — never re-label)
+
+Use this workflow after first-time setup (and after `gmail-filters.xml` is imported
+if possible). The goal is **incoming mail in the inbox**, not a repeat pass over
+mail that was already filed.
+
+Every subsequent run follows this lookup order **before** touching any mail:
+
+1. Read `MEMORY.md` — account-specific precedents override general defaults.
+2. Read `references/email-policy.md` — category actions and safety rules.
+3. Read `references/provider-rules.md` — the sender-domain → label lookup table.
+4. Call `list_labels` and build the set of **provider label IDs** (all nested
+   `Parent/Provider` labels plus any label path listed in `provider-rules.md`).
+5. Call `search_threads` with the returning-run scope (default below). **Only**
+   process **inbox** threads that do **not** already satisfy their provider rule
+   (see "Rule-satisfied skip"). Reason from scratch only for senders the rules
+   table doesn't cover.
+
+**Default scope:** `in:inbox -in:sent -in:chats -in:draft`
+
+Optional narrowing: `newer_than:7d in:inbox -in:sent -in:chats -in:draft` if the
+user wants a time window on top of inbox-only.
+
+**Never re-run on rule-satisfied mail:** once a thread carries the **expected**
+label for its sender and content type, **skip it entirely** — do not re-label,
+re-archive, re-read, or change keep/archive. Gmail filters handle most future mail
+automatically; the agent catches unlabeled inbox mail (new senders, filter gaps).
+
+**Explicit backfill only:** to label old mail or fix gaps (`has:nouserlabels`,
+`newer_than:1y`, a date range, or "re-scan my mailbox"), the user must ask for
+**backfill / gap-fill mode** — that is first-time-setup behaviour, not a returning
+run. Do not widen scope silently on scheduled or weekly runs.
+
+The user may override scope, but default to inbox-only unless they explicitly
+request backfill.
+
+## Rule-satisfied skip (all runs)
+
+Before applying any label, resolve the **expected label** for the thread:
+
+1. Match sender domain to `references/provider-rules.md` (after stripping
+   mail-vendor prefixes).
+2. For multi-type brands, use content classification (receipt vs newsletter vs
+   membership) to pick the correct `Parent/Provider` path — same logic as label
+   selection below.
+3. Map the expected label **name** to its ID via `list_labels`.
+
+**If the thread's `labelIds` already include that expected label ID, skip the
+thread entirely** — no `label_thread`, no `unlabel_thread`, no body fetch. This
+applies to:
+
+- **Returning runs** (inbox-only scope)
+- **First-time setup / backfill** within the cutoff window (`newer_than:1y`, etc.)
+
+The cutoff defines *which mail to consider*; rule-satisfied skip defines *which
+threads within that window still need work*. A thread labeled correctly last week
+inside a `newer_than:1y` scan is skipped, not re-processed.
+
+**Wrong or partial labels:** if the thread has a different provider label but not
+the expected one, do **not** skip — file under the expected label (and report the
+change). If unsure, add to "needs review".
+
+Count skipped threads as **Rule already satisfied** in the run report.
 
 ## Master label taxonomy
 
@@ -131,18 +203,6 @@ the child.
 Users may rename or extend masters in `MEMORY.md` (e.g. regional groupings). Read
 `MEMORY.md` before creating masters; never duplicate a master the user already
 uses under a different name.
-
-## Returning runs
-
-Every subsequent run follows this lookup order **before** touching any mail:
-
-1. Read `MEMORY.md` — account-specific precedents override general defaults.
-2. Read `references/email-policy.md` — category actions and safety rules.
-3. Read `references/provider-rules.md` — the sender-domain → label lookup table.
-4. Call `search_threads` for the requested scope and apply existing rules. Only
-   reason from scratch for senders the table doesn't cover.
-
-Default scope for returning runs: `newer_than:7d`. The user may override.
 
 ## Gmail tools you'll use
 
@@ -179,12 +239,14 @@ empty leftover and set colours themselves.
 
 ## Parameters (ask or infer)
 
-- **Scope** — which mail to process. Default to `newer_than:1y` for first-time
-  setup; `newer_than:7d` for returning runs. Trade-off: shorter window = faster;
-  longer = catches dormant subscriptions. Other useful scopes: `is:unread`, a
-  specific label, `in:inbox`, or `has:nouserlabels -in:sent -in:chats -in:draft`.
-  Note the inbox is often nearly empty because filters pre-archive a lot, so a
-  date-based scope usually catches more than `in:inbox`.
+- **Scope** — which mail to process.
+  - **First-time setup / backfill:** default `newer_than:1y -in:sent -in:chats
+    -in:draft`, or `has:nouserlabels -in:sent -in:chats -in:draft` for gap-fill.
+    Use only when the user asks for initial setup or explicit backfill.
+  - **Returning runs:** default `in:inbox -in:sent -in:chats -in:draft`. Process
+    only inbox threads whose provider rule is not yet satisfied.
+  - Other overrides (user must ask): `is:unread`, a specific label, or a custom
+    date range for one-off backfill.
 - **Dry run** — if the user wants to preview, do everything except `label_thread`
   / `unlabel_thread`, and just report the plan. Default to a dry run on the very
   first use of a new scope, then act once the user confirms the plan looks right.
@@ -222,8 +284,8 @@ empty leftover and set colours themselves.
    it's still unclear, you may look the domain up on the web to identify the
    company before deciding.
 
-4. **Decide whether to act or skip.** Skip (leave untouched, no label) anything
-   that isn't really provider/subscription mail:
+4. **Decide whether to act or skip (non-provider mail).** Skip (leave untouched,
+   no label) anything that isn't really provider/subscription mail:
    - One-time security codes / OTP / login verification (e.g. "Your … code is
      123456") — ephemeral, labeling them is noise.
    - Genuinely personal mail from an individual person.
@@ -246,7 +308,7 @@ empty leftover and set colours themselves.
      keeping a newsletter is a minor annoyance; wrongly archiving a receipt the
      user needed is the failure mode to avoid.
 
-6. **Select the label.**
+6. **Select the expected label.**
    - **Always prefer an existing label.** If any label's leaf name matches the
      provider (case-insensitive, ignoring punctuation/spacing — `Youtube` ==
      `YouTube`, `Paypal` == `PayPal`), use it, wherever it lives in the tree.
@@ -277,20 +339,25 @@ empty leftover and set colours themselves.
    - Treat every created label as provisional: list it in the report so the user
      can rename or move it.
 
-7. **Apply.** `label_thread` with the chosen label ID. Then, if step 5 said
+7. **Rule-satisfied skip.** If the thread's `labelIds` already include the
+   expected label ID from step 6, **skip** — count as rule already satisfied (see
+   "Rule-satisfied skip"). Do not re-archive mail that was intentionally kept in
+   the inbox as a record.
+
+8. **Apply.** `label_thread` with the chosen label ID. Then, if step 5 said
    archive *and* the thread still carries `INBOX`, `unlabel_thread` the `INBOX`
    label. Never touch `UNREAD` (don't mark things read) or `STARRED`.
 
-8. **Report** (see format below).
+9. **Report** (see format below).
 
-9. **Persist.** Append a dated entry to `LOG.md` (scope, labels created, threads
+10. **Persist.** Append a dated entry to `LOG.md` (scope, labels created, threads
    filed, skips, coverage). If you created any new labels or decided a novel case,
    add the new domains to `references/provider-rules.md` and record the precedent
    in `MEMORY.md`.
 
-10. **Refresh the Gmail receive rules.** Whenever the provider rules change,
-    regenerate `gmail-filters.xml` and `email-receive-rules.md` so the user's
-    auto-categorisation filters stay in sync (see next section).
+11. **Refresh the Gmail receive rules.** On **returning runs**, regenerate
+    `gmail-filters.xml` and `email-receive-rules.md` **only when** provider rules
+    changed (new sender added). Skip regeneration if nothing new was filed.
 
 ## Generating Gmail receive rules (auto-categorisation)
 
@@ -322,7 +389,9 @@ mapping is the reliable way to emit both files (keeps XML escaping correct).
 End every run with a concise summary, not a per-email wall of text:
 
 ```
-## Email triage — <scope>, <N> threads processed
+## Email triage — <scope>, <N> threads in scope, <M> processed
+
+**Rule already satisfied (skipped):** <count>
 
 **Filed under existing labels:** <count>
 - <Provider> → <Label>  (×<n>)  [kept | archived]
@@ -341,8 +410,8 @@ End every run with a concise summary, not a per-email wall of text:
 **Kept in inbox (records):** <count>   **Archived (noise):** <count>
 ```
 
-Then ask whether the new label placements look right and whether to widen the
-scope (e.g. to all mail).
+Then ask whether the new label placements look right. On returning runs, do **not**
+suggest widening scope unless the user asks for backfill.
 
 ## Worked examples
 
@@ -360,16 +429,27 @@ Action: no Anthropic label exists → ensure master `Subscriptions` exists (crea
 missing), then create `Subscriptions/Anthropic`, apply it. Receipt → keep in inbox.
 Report both master and child if newly created.
 
-**Example 4 — gap fill (label exists but filter missed it)**
+**Example 4 — gap fill (backfill mode only, not returning runs)**
 Input: from `noreply-purchases@youtube.com`, subject "Your Premium membership will end…"
+Scope: `has:nouserlabels` or first-time setup — thread is unlabeled.
 Action: `Subscriptions/YouTube` exists but wasn't applied → apply it. Membership
 status is a record → keep in inbox.
+If the thread already has `Subscriptions/YouTube`, skip (rule satisfied).
 
-**Example 5 — skip**
+**Example 5 — cutoff scan, rule already satisfied**
+Input: from `newsletter@spotify.com`, scope `newer_than:1y`, thread already has
+`Subscriptions/Spotify` (matches rule + content type).
+Action: skip entirely — do not re-label or re-archive.
+
+**Example 6 — returning run, rule already satisfied**
+Input: from `newsletter@spotify.com` in inbox, thread already has `Subscriptions/Spotify`.
+Action: skip entirely.
+
+**Example 7 — skip (OTP)**
 Input: from `no-reply@account.example.com`, subject "Your verification code"
 Action: one-time verification code → skip entirely (no label, no archive).
 
-**Example 6 — attachment filename only**
+**Example 8 — attachment filename only**
 Input: from `receipts@apple.com`, subject "Your receipt", attachment
 `Order-W123456789.pdf`
 Action: note the filename for context; do NOT open the PDF. Label
@@ -378,10 +458,13 @@ Action: note the filename for context; do NOT open the PDF. Label
 ## Why it's built this way
 
 The goal is an inbox where only mail that genuinely needs a human stays visible.
-The worst outcomes are (a) creating duplicate/oddly-placed labels that clutter the
-taxonomy, and (b) archiving something the user needed to see. That's why the skill
-leans hard on *existing* labels, files new ones under sensible parents, keeps
-financial records in the inbox by default, and reports every new label and every
-skip so nothing happens invisibly. The starter rules file is a convenience, not a
+After first-time setup, **Gmail filters plus inbox-only returning runs** handle
+new mail. Within any cutoff window, **rule-satisfied skip** avoids re-touching
+mail that already matches `provider-rules.md`. The worst outcomes are
+(a) creating duplicate/oddly-placed labels that clutter the taxonomy, (b) archiving
+something the user needed to see, and (c) re-touching labeled mail on every sweep.
+That's why the skill leans hard on *existing* labels, skips already-filed threads,
+files new ones under sensible parents, keeps financial records in the inbox by
+default, and reports every new label and every skip so nothing happens invisibly. The starter rules file is a convenience, not a
 crutch — the classification reasoning is the real engine and stands on its own if
 the rules are removed.

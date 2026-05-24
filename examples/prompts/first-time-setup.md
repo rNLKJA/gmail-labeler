@@ -18,16 +18,19 @@ Steps:
    Banking, Bills, Travel, Government, Health, Career, Education, Property).
    Create any missing masters before proposing child labels.
 4. Propose provider labels grouped by parent (e.g. Shopping/Amazon,
-   Subscriptions/Spotify).
+   Subscriptions/Spotify). Note how many threads would be skipped because the
+   expected label is already applied (rule-satisfied skip).
 5. Report the full plan — do NOT apply labels until I confirm.
-6. After confirmation, create masters (if still missing), apply labels, persist to
-   provider-rules.md, and generate gmail-filters.xml + email-receive-rules.md.
+6. After confirmation, create masters (if still missing), apply labels only to
+   gaps, persist to provider-rules.md, and generate gmail-filters.xml +
+   email-receive-rules.md.
 ```
 
 ## Expected output
 
 - Count of distinct senders found
 - Master labels to create (or already present)
+- Rule already satisfied (skipped) count
 - Proposed label map grouped by parent category
 - Keep vs archive recommendation per provider
 - List of senders skipped (OTP, personal, ambiguous)
