@@ -8,8 +8,10 @@ labeled, what was skipped, and coverage notes.
 ## YYYY-MM-DD — example run
 
 - **Scope:** `in:inbox -in:sent -in:chats -in:draft`
-- **Rule already satisfied (skipped):** 312
+- **lookback_days:** 365 (not used on inbox-only run)
+- **Rule already satisfied (skipped):** 38
 - **Filed:** 4 threads (gaps only)
+- **Filters changed:** re-import gmail-filters.xml
 - **New labels:** 0
 - **Skipped:** 2 (OTP code, personal mail)
 - **Kept in inbox:** 4   **Archived:** 8

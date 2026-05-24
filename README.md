@@ -46,8 +46,9 @@ If you only receive a handful of emails per week and never use labels, manual Gm
 | `SKILL.md` | Step-by-step method the agent follows on every run |
 | `references/provider-rules.template.md` | Starter sender-to-label table across banking, grocery, subscriptions, travel, bills, and more |
 | `references/email-policy.md` | Category actions (keep, archive, notify, skip) and safety rules |
-| `examples/prompts/` | Copy-paste prompts for first-time setup, weekly inbox triage, backfill, and dry runs |
+| `examples/prompts/` | Copy-paste prompts for first-time setup, weekly inbox triage, backfill, dry runs, fix-wrong-labels |
 | `examples/scheduling/` | launchd, cron, and GitHub Actions templates for Sunday triage |
+| `scripts/generate_filters.py` | Deterministic `gmail-filters.xml` generator |
 | Generated `gmail-filters.xml` | One Gmail import to label existing mail and auto-file future mail |
 
 After setup, a typical inbox drops from hundreds of unread threads to a short list of actionable items, with everything else filed under organised labels in the sidebar.
@@ -56,57 +57,54 @@ After setup, a typical inbox drops from hundreds of unread threads to a short li
 
 ```mermaid
 flowchart TD
-  subgraph agent [Agent + gmail-labeler skill]
-    Load[Load SKILL.md]
-    Mem[Read MEMORY.md]
-    Policy[Read email-policy.md]
-    Rules[Read provider-rules.md]
-    Scan[search_threads — mail in scope]
-    Identify[Identify provider from sender domain]
-    Classify[Classify content type]
-    Decide{Keep in inbox or archive?}
-    Label[label_thread — apply provider label]
-    Archive[unlabel_thread INBOX — archive noise]
-    Persist[Update provider-rules + LOG.md]
-    Filters[Generate gmail-filters.xml]
+  subgraph modes [Run mode]
+    FirstRun[FirstTimeSetup]
+    Returning[ReturningRun]
+    Backfill[BackfillGapFill]
   end
 
-  subgraph gmail [Gmail via MCP]
-    Inbox[(Inbox + labels)]
+  subgraph params [Parameters]
+    Lookback["lookback_days → newer_than:Nd"]
+    InboxScope[in:inbox]
+    CatchUp["catch_up_days opt-in"]
+    DryRun[dry_run no Gmail writes]
   end
 
-  subgraph local [Local files — git-ignored]
-    MemoryFile[(MEMORY.md)]
-    RulesFile[(provider-rules.md)]
-    LogFile[(LOG.md)]
+  subgraph pipeline [Agent pipeline]
+    Load[Load SKILL + rules]
+    Search[search_threads]
+    Classify[Classify provider]
+    SkipGate{Rule satisfied?}
+    Apply[label_thread]
+    Persist[Update rules + LOG]
   end
 
-  User([You]) -->|first run or weekly triage| Load
-  Load --> Mem --> Policy --> Rules --> Scan
-  Mem -.-> MemoryFile
-  Rules -.-> RulesFile
-  Scan <-->|read threads| Inbox
-  Scan --> Identify --> Classify --> Decide
-  Decide -->|receipts, bills, records| Label
-  Decide -->|newsletters, promos| Label
-  Label --> Archive
-  Label --> Persist
-  Persist --> RulesFile
-  Persist --> LogFile
-  Persist --> Filters
-  Filters -->|import once| Inbox
-  Archive --> Inbox
-  Label --> Inbox
+  subgraph tools [Scripts]
+    GenPy[generate_filters.py]
+    FiltersOut[gmail-filters.xml]
+  end
+
+  FirstRun --> Lookback --> Load
+  Backfill --> Lookback --> Load
+  Returning --> InboxScope --> Load
+  CatchUp -.-> Load
+  Load --> Search --> Classify --> SkipGate
+  SkipGate -->|yes| SkipDone[Count skipped]
+  SkipGate -->|no| Apply --> Persist
+  DryRun -.-> Apply
+  Persist --> GenPy --> FiltersOut
+  FiltersOut -->|import once| GmailImport[Gmail filters]
 ```
 
-**First-time setup** scans the last year of mail, **ensures master category labels exist**, builds a sender-to-label map, and generates importable Gmail filters — **skipping mail that already satisfies the rule**. **Returning runs** process **inbox only** with the same rule-satisfied skip.
+**First-time setup** scans mail within `lookback_days` (default 365), creates master labels **on demand**, builds a sender-to-label map, and runs `scripts/generate_filters.py` — **skipping mail that already satisfies the rule**. **Returning runs** process **inbox only** with the same skip. See [VERSION.md](VERSION.md) for the feature matrix.
 
 ## Core behaviour
 
 - **Labels mail by provider.** Every recognisable sender gets a nested label (`Shopping/Amazon`, `Subscriptions/Spotify`, `Banking/PayPal`, and so on).
 - **Keeps records, archives noise.** Receipts, bills, and government mail stay in the inbox. Newsletters and promos are labelled then archived.
-- **Generates importable Gmail filters.** One import in Gmail Settings clears the backlog and auto-categorises future mail.
-- **Learns over time.** New senders are added to `provider-rules.md`; precedents go in `MEMORY.md`; every run is logged in `LOG.md`.
+- **Generates importable Gmail filters** via `scripts/generate_filters.py` — re-import when rules change.
+- **Parameterised lookback.** Set `lookback_days: 90` for a 90-day first pass; `catch_up_days: 7` for opt-in catch-up on inbox-zero accounts.
+- **Learns over time.** New senders go in `provider-rules.md`; precedents in `MEMORY.md`; every run logged in `LOG.md`.
 
 ## What your Gmail looks like after
 
@@ -169,6 +167,20 @@ collapses to the handful of things that actually need you.
   - **Codex** (OpenAI CLI / agent)
 - The Gmail connector must support: `search_threads`, `list_labels`, `label_thread`,
   `unlabel_thread`, `create_label` (see `SKILL.md` for details)
+- **Python 3** for `scripts/generate_filters.py` (stdlib only)
+
+## Gmail MCP setup (about 5 minutes)
+
+1. **Google Cloud OAuth client** — create a Desktop app OAuth client, download JSON keys.
+2. **Save keys** to `~/.gmail-mcp/gcp-oauth.keys.json`.
+3. **Add MCP server** to your agent config:
+   - **Cursor:** `~/.cursor/mcp.json` — package `@gongrzhe/server-gmail-autoauth-mcp`
+   - **Claude Code:** `~/.claude/mcp.json` (same package)
+4. **Authenticate:** `npx @gongrzhe/server-gmail-autoauth-mcp auth`
+5. **Reload MCP** in your agent and verify with `list_labels`.
+
+**Security:** limit MCP access if your inbox holds confidential mail. Consider a
+dedicated Gmail account for automation trials.
 
 ## Installation
 
@@ -217,19 +229,39 @@ cp LOG.template.md LOG.md
 cp references/provider-rules.template.md references/provider-rules.md
 ```
 
+### Rebuild install package (optional)
+
+After pulling updates:
+
+```bash
+./scripts/build-skill.sh
+# writes ../email-labeler.skill by default; use --output PATH to override
+```
+
+## Parameters
+
+| Parameter | Default | Example scope |
+|---|---|---|
+| `lookback_days` | `365` | `newer_than:365d -in:sent -in:chats -in:draft` |
+| `catch_up_days` | `7` | `has:nouserlabels newer_than:7d …` (opt-in) |
+| `dry_run` | `true` on first scope | No Gmail mutations when true |
+
+Natural language works: *"last 30 days"* → `lookback_days: 30`.
+
 ## Usage — first run
 
 Paste this into your agent:
 
 ```text
 Run the gmail-labeler skill in first-time setup mode.
-Scope: newer_than:1y -in:sent -in:chats -in:draft
+lookback_days: 365
+Scope: newer_than:365d -in:sent -in:chats -in:draft
 Dry run: true
 Goal: build my 1:1 sender→label map and report it before applying.
 ```
 
-Expected output: a report of distinct senders, proposed labels grouped by parent,
-and a confirmation prompt before applying.
+Expected output: distinct senders, masters on demand, rule-satisfied skip count,
+confirmation before any Gmail mutations.
 
 See also: `examples/prompts/first-time-setup.md`
 
@@ -240,13 +272,14 @@ Weekly triage prompt:
 ```text
 Run the gmail-labeler skill in returning-run mode.
 Scope: in:inbox -in:sent -in:chats -in:draft
-
-Skip threads that already carry the **expected** provider label for their sender
-and content type (rule-satisfied skip). Only label gaps.
-Apply existing rules from references/provider-rules.md; only reason from scratch for new senders.
+Dry run: false
+Skip rule-satisfied threads. Only label gaps.
 ```
 
-See also: `examples/prompts/weekly-triage.md`
+**Inbox-zero:** if filters pre-archive everything, zero inbox threads is normal.
+Use catch-up only when you ask: `has:nouserlabels newer_than:7d …`
+
+See also: `examples/prompts/weekly-triage.md`, `examples/prompts/fix-wrong-labels.md`
 
 ## Scheduling (weekly automation)
 
@@ -265,14 +298,18 @@ You need a working agent CLI (`cursor-agent`, `claude`, `codex`, or equivalent) 
 
 | File | Purpose |
 |---|---|
-| `SKILL.md` | The method — read first by the agent |
+| `SKILL.md` | The method — read first by the agent (v1.1.0) |
 | `README.md` | This file |
+| `VERSION.md` | Feature matrix and current version |
+| `CHANGELOG.md` | Release history |
 | `LICENSE` | GPL-3.0 |
+| `scripts/generate_filters.py` | Rules → `gmail-filters.xml` + `email-receive-rules.md` |
+| `scripts/build-skill.sh` | Rebuild `email-labeler.skill` zip |
 | `references/email-policy.md` | Category actions and safety rules |
-| `references/provider-rules.template.md` | Starter sender→label table (~100 brands) |
+| `references/provider-rules.template.md` | Starter sender→label table (~200 rules) |
 | `MEMORY.template.md` | Scaffold for account-specific precedents |
 | `LOG.template.md` | Scaffold for run history |
-| `examples/prompts/` | Copy-paste agent prompts |
+| `examples/prompts/` | First-time, weekly, backfill, dry-run, fix-wrong-labels |
 | `examples/scheduling/` | launchd, cron, GitHub Actions templates |
 
 Working copies (`MEMORY.md`, `LOG.md`, `references/provider-rules.md`) are
@@ -306,8 +343,15 @@ Anything beyond that boundary depends on your chosen MCP and agent runtime.
 
 - Edit `MEMORY.md` for account-specific precedents (parent taxonomy, keep/archive
   rules, multi-type brand splits).
-- Edit `references/provider-rules.md` for your sender→label map.
+- Edit `references/provider-rules.md` for your sender→label map (include `Match` for multi-type brands).
 - Edit `references/email-policy.md` to adjust category actions.
+- Regenerate filters after rule changes:
+
+```bash
+python scripts/generate_filters.py references/provider-rules.md --output-dir .
+```
+
+Re-import `gmail-filters.xml` in Gmail when the run report says rules changed.
 
 ## Contributing
 

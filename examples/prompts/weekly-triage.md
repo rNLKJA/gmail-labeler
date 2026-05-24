@@ -12,10 +12,14 @@ Inbox only. Skip threads where the expected label from provider-rules.md is
 already applied (rule-satisfied skip). Reason from scratch only for senders not
 in the rules table or with wrong/missing labels.
 
+Optional catch-up (only if I ask): catch_up_days: 7
+Scope: has:nouserlabels newer_than:7d -in:sent -in:chats -in:draft
+
 At the end:
 - Append a summary to LOG.md
 - Add any new domains to provider-rules.md
-- Regenerate gmail-filters.xml only if rules changed
+- If rules changed: python scripts/generate_filters.py references/provider-rules.md --output-dir .
+  and remind me to re-import gmail-filters.xml
 ```
 
 ## Expected output
@@ -25,8 +29,13 @@ At the end:
 - Any new labels created (with report)
 - Skipped items for review
 - Kept vs archived counts
+- Filter re-import reminder if rules changed
+
+## Inbox-zero note
+
+If inbox is empty because filters pre-archive mail, zero threads processed is OK.
+Use catch-up scope only when explicitly requested.
 
 ## Backfill (explicit only)
 
-To label old mail or fix gaps, use first-time setup or ask for backfill with
-`has:nouserlabels` — not the weekly returning-run scope.
+See `backfill-gap-fill.md` — not for weekly returning runs.

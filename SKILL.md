@@ -1,5 +1,6 @@
 ---
 name: email-labeler
+version: 1.1.0
 description: Triage and label Gmail by sender/provider so the inbox shows only what matters, and generate importable Gmail filter rules (sender → label) to auto-categorise future mail. Use this skill whenever the user wants to label, sort, file, organize, tidy, or "triage" their Gmail; clean up or clear the inbox; auto-file newsletters, marketing, receipts, or subscription mail by provider; find which senders have no label yet; or build email "rules"/filters that automatically categorise incoming email. Trigger on phrases like "label my email", "sort my inbox", "file my subscriptions", "who don't I have a label for", "archive the junk", "run my email triage", or "draft email rules to auto-categorise" — even when the user doesn't name a specific provider.
 ---
 
@@ -76,21 +77,24 @@ filed, skips). Nothing happens invisibly.
 Use this workflow when the user has never run the skill, or wants to rebuild their
 sender→label map from scratch.
 
-1. **Scan sender addresses across the cutoff window.** Default scope:
-   `newer_than:1y -in:sent -in:chats -in:draft`. Also useful:
-   `has:nouserlabels -in:sent -in:chats -in:draft` to find mail still needing
-   labels. Paginate through all results.
+1. **Scan sender addresses across the cutoff window.** Build scope from
+   `lookback_days` (default `365`): `newer_than:{N}d -in:sent -in:chats -in:draft`.
+   For gap-fill use `has:nouserlabels -in:sent -in:chats -in:draft` (optionally
+   with `newer_than:{N}d`). Paginate through all results.
    - **Why a cutoff?** Full-mailbox scans are expensive and slow. Most signal
-     lives in the last 12 months. The user can widen to `newer_than:2y` or
-     `in:anywhere` once happy with the taxonomy.
+     lives in the last 12 months. The user can set `lookback_days: 30` for a
+     shorter first pass, or widen to `730` (two years) once happy with the taxonomy.
 2. **Build a 1:1 sender → label map.** For every distinct sender domain, map to
    a provider label. Strip mail-vendor prefixes (`mail.`, `email.`, `e.`,
    `info.`, `comms.`, `notify.`, `news.`, `updates.`, `txn.`) to find the real
-   brand.
-3. **Create master category labels first.** Call `list_labels`, then `create_label`
-   for each missing master from the taxonomy table below (plain name, no `/`).
-   Skip masters the user has customised in `MEMORY.md`. Report created vs
-   already-present masters before creating any `Parent/Provider` child labels.
+   brand. For multi-type brands use multiple rows with `Match` in
+   `provider-rules.md` (see template `## Multi-type brands`).
+3. **Create master category labels on demand.** Derive required masters from
+   planned `Parent/Provider` children — create each master only when the first
+   child under that parent is needed (plain name, no `/`). Skip masters the user
+   has customised in `MEMORY.md`. If `MEMORY.md` sets `create_all_masters: true`,
+   create all masters from the taxonomy table below upfront. Report created vs
+   already-present masters before creating child labels.
 4. **Categorise and create provider labels in bulk.** Group providers under the
    right parent. Create missing child labels with `create_label` using the full
    `Parent/Provider` display name. Add new master parents only when no existing
@@ -100,14 +104,14 @@ sender→label map from scratch.
 5. **Persist the map.** Write every domain → label → keep/archive decision to
    `references/provider-rules.md`. This becomes the seed list for every later run.
    Start from `references/provider-rules.template.md` if the file doesn't exist.
-6. **Generate Gmail filters.** Produce `gmail-filters.xml` and
-   `email-receive-rules.md` so future mail auto-categorises without another scan
-   (see "Generating Gmail receive rules" below). After the user imports filters,
-   **returning runs should not re-scan historical mail** — only the inbox.
+6. **Generate Gmail filters.** Run `python scripts/generate_filters.py
+   references/provider-rules.md --output-dir <dir>` (see "Generating Gmail receive
+   rules"). After the user imports filters, **returning runs should not re-scan
+   historical mail** — only the inbox.
 
-Default to a **dry run** on first use: report the full sender→label plan (including
-which master labels would be created) and ask for confirmation before applying
-labels.
+Default to a **dry run** on first use: report the full sender→label plan (masters
+to create on demand, rule-satisfied skip count) and ask for confirmation before
+any Gmail mutations.
 
 ## Returning runs (inbox only — never re-label)
 
@@ -145,6 +149,18 @@ run. Do not widen scope silently on scheduled or weekly runs.
 The user may override scope, but default to inbox-only unless they explicitly
 request backfill.
 
+## Inbox-zero mailboxes
+
+Some accounts run **inbox-zero**: filters pre-archive most mail, so `in:inbox`
+returns few or zero threads on returning runs. That is normal when filters work.
+
+- **Default:** keep `in:inbox` scope on returning runs. Zero threads processed is OK.
+- **Catch-up (explicit opt-in only):** when the user asks to find unlabeled mail
+  outside the inbox, use:
+  `has:nouserlabels newer_than:{catch_up_days}d -in:sent -in:chats -in:draft`
+  (default `catch_up_days: 7`). Still apply rule-satisfied skip.
+- Never widen to catch-up scope on scheduled runs unless the user configured it.
+
 ## Rule-satisfied skip (all runs)
 
 Before applying any label, resolve the **expected label** for the thread:
@@ -175,9 +191,9 @@ Count skipped threads as **Rule already satisfied** in the run report.
 
 ## Master label taxonomy
 
-On a **fresh start** the user often has no nested labels yet. Before creating any
-`Parent/Provider` label, ensure these **master categories** exist as top-level
-labels (one `create_label` call each, no slash in the name):
+Reference list of **parent categories**. On a fresh start, create a master only
+when the first `Parent/Provider` child under that parent is needed — do not create
+all masters upfront unless `MEMORY.md` sets `create_all_masters: true`.
 
 | Master label | Typical children |
 |---|---|
@@ -192,9 +208,6 @@ labels (one `create_label` call each, no slash in the name):
 | `Career` | `Career/LinkedIn`, `Career/Indeed` |
 | `Education` | `Education/Coursera`, `Education/MIT` |
 | `Property` | `Property/Domain`, `Property/Realestate.com.au` |
-
-**Why masters first:** child-only creation can leave the sidebar looking flat or
-out of order. Masters give a collapsible tree before provider labels are added.
 
 **Every run:** after `list_labels`, if you need to create `Parent/Child` and
 `Parent` is missing, create the master first, refresh the label map, then create
@@ -239,17 +252,25 @@ empty leftover and set colours themselves.
 
 ## Parameters (ask or infer)
 
-- **Scope** — which mail to process.
-  - **First-time setup / backfill:** default `newer_than:1y -in:sent -in:chats
-    -in:draft`, or `has:nouserlabels -in:sent -in:chats -in:draft` for gap-fill.
-    Use only when the user asks for initial setup or explicit backfill.
-  - **Returning runs:** default `in:inbox -in:sent -in:chats -in:draft`. Process
-    only inbox threads whose provider rule is not yet satisfied.
-  - Other overrides (user must ask): `is:unread`, a specific label, or a custom
-    date range for one-off backfill.
-- **Dry run** — if the user wants to preview, do everything except `label_thread`
-  / `unlabel_thread`, and just report the plan. Default to a dry run on the very
-  first use of a new scope, then act once the user confirms the plan looks right.
+| Parameter | Default | Maps to | Used in |
+|---|---|---|---|
+| `lookback_days` | `365` | `newer_than:{N}d` | First-time setup, backfill |
+| `catch_up_days` | `7` | `has:nouserlabels newer_than:{N}d` | Returning catch-up (opt-in) |
+| `dry_run` | `true` on first scope | — | All modes |
+
+- **Scope** — built from parameters above, or user override.
+  - **First-time setup / backfill:** `newer_than:{lookback_days}d -in:sent -in:chats
+    -in:draft`, or `has:nouserlabels …` for gap-fill.
+  - **Returning runs:** `in:inbox -in:sent -in:chats -in:draft`.
+  - **Catch-up (opt-in):** `has:nouserlabels newer_than:{catch_up_days}d -in:sent
+    -in:chats -in:draft`.
+  - Natural language: "last 30 days" → `lookback_days: 30`.
+- **Dry run** — when `dry_run: true`:
+  - **Allowed:** `search_threads`, `list_labels`, `get_thread` (read only).
+  - **Forbidden:** `create_label`, `label_thread`, `unlabel_thread` (no Gmail mutations).
+  - Report: proposed masters (on demand), labels to create, threads to file,
+    rule-satisfied skip count, keep/archive decisions.
+  - Default dry run on first use of a new scope; act after user confirms.
 
 ## Persistent files (read/write these every run)
 
@@ -268,9 +289,9 @@ empty leftover and set colours themselves.
 
 1. **Load memory, policy, rules, and labels.** Read `MEMORY.md`,
    `references/email-policy.md`, and `references/provider-rules.md`. Call
-   `list_labels` and build a map of full display name → label ID. On first-time
-   setup (or when the map has no user nested labels yet), create missing **master
-   category** labels before processing mail (see "Master label taxonomy").
+   `list_labels` and build a map of full display name → label ID. Create **master
+   category labels on demand** when adding the first child under a parent (see
+   "Master label taxonomy"). Respect `create_all_masters: true` in `MEMORY.md`.
 
 2. **Fetch mail in scope** with `search_threads`. Paginate via `pageToken` until
    no more results. Process newest-first.
@@ -355,34 +376,37 @@ empty leftover and set colours themselves.
    add the new domains to `references/provider-rules.md` and record the precedent
    in `MEMORY.md`.
 
-11. **Refresh the Gmail receive rules.** On **returning runs**, regenerate
-    `gmail-filters.xml` and `email-receive-rules.md` **only when** provider rules
-    changed (new sender added). Skip regeneration if nothing new was filed.
+11. **Refresh the Gmail receive rules.** When `provider-rules.md` changed this run,
+    run:
+    `python scripts/generate_filters.py references/provider-rules.md --output-dir <dir>`
+    and remind the user to **re-import** `gmail-filters.xml` in Gmail (Settings →
+    Filters → Import → Apply to existing conversations). Skip if no rule changes.
 
 ## Generating Gmail receive rules (auto-categorisation)
 
-Manual labelling doesn't scale; Gmail **filters** do. From the same
-sender→label→keep/archive mapping in `references/provider-rules.md`, produce two
-deliverables the user can apply once:
+**Always use the generator script** — do not hand-write XML.
 
-- **`gmail-filters.xml`** — an importable Gmail filters file. Each rule is one
-  `<entry>` with `from` (sender domain), `label` (full nested label name), and
-  `shouldArchive=true` for marketing/newsletters (omit it to keep records in the
-  inbox). Gmail import: Settings → Filters and Blocked Addresses → Import filters
-  → tick "Apply to existing conversations" to also clear the backlog.
-- **`email-receive-rules.md`** — the same rules in a human-readable table, grouped
-  by archive vs keep, with the import steps and caveats.
+```bash
+python scripts/generate_filters.py references/provider-rules.md --output-dir .
+python scripts/generate_filters.py references/provider-rules.md --dry-run
+```
 
-**Output location:** write both deliverables to the **Inbox Automation project
-root** — `Project Desk/Inbox Automation/gmail-filters.xml` and
-`Project Desk/Inbox Automation/email-receive-rules.md` — regardless of whether
-the skill is invoked from the Rin-OS mirror or the project folder.
+The script reads markdown tables (`Domain`, optional `Match`, `Label`, `Default`,
+`Notes`) and emits:
 
-Key points: filters reference labels by **name** (not ID). Match by sender domain;
-for multi-type brands add specific sub-address rules (e.g.
-`insideapple.apple.com` → News & Ads/Apple). Never add rules for OTP/login/
-verification senders or personal mail. A small Python generator over the
-mapping is the reliable way to emit both files (keeps XML escaping correct).
+- **`gmail-filters.xml`** — importable Gmail filters. Each rule uses `from`
+  (`Match` if set, else `Domain`), `label`, and `shouldArchive=true` when
+  `Default` is `archive`.
+- **`email-receive-rules.md`** — human-readable archive vs keep tables + import steps.
+
+**Output location:** write both to the **Inbox Automation project root** when
+invoked from Rin's workspace — `Project Desk/Inbox Automation/gmail-filters.xml`
+and `Project Desk/Inbox Automation/email-receive-rules.md`. For standalone clones,
+use `--output-dir .` in the skill folder or a path the user specifies.
+
+Key points: filters match **from** only (not subject). Multi-type brands need
+distinct `Match` rows in `provider-rules.md`. Never add rules for OTP/login
+senders or personal mail. Hand-written XML is fallback only if the script fails.
 
 ## Report structure
 
@@ -408,6 +432,9 @@ End every run with a concise summary, not a per-email wall of text:
 - ...
 
 **Kept in inbox (records):** <count>   **Archived (noise):** <count>
+
+**Filters changed:** re-import gmail-filters.xml in Gmail (Settings → Filters →
+Import → tick Apply to existing conversations). Omit this line if no rule changes.
 ```
 
 Then ask whether the new label placements look right. On returning runs, do **not**
