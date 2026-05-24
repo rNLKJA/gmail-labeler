@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Gmail Labeler — weekly triage via macOS LaunchAgent
+
+  Assumptions:
+  - cursor-agent (or claude) is on PATH
+  - Skill installed at ~/.cursor/skills/gmail-labeler/
+  - Gmail MCP is configured in your agent environment
+
+  Install:
+    cp com.rNLKJA.gmail-labeler.weekly.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.rNLKJA.gmail-labeler.weekly.plist
+
+  Uninstall:
+    launchctl unload ~/Library/LaunchAgents/com.rNLKJA.gmail-labeler.weekly.plist
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.rNLKJA.gmail-labeler.weekly</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-lc</string>
+    <string>cursor-agent run --skill gmail-labeler --prompt-file ~/.cursor/skills/gmail-labeler/examples/prompts/weekly-triage.md 2>&1 | tee -a ~/Library/Logs/gmail-labeler.log</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Weekday</key>
+    <integer>0</integer>
+    <key>Hour</key>
+    <integer>9</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>/Users/REPLACE_ME/Library/Logs/gmail-labeler.stdout.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/REPLACE_ME/Library/Logs/gmail-labeler.stderr.log</string>
+  <key>RunAtLoad</key>
+  <false/>
+</dict>
+</plist>

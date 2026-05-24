@@ -1,0 +1,13 @@
+# Personal data — fill these in locally, don't commit
+/MEMORY.md
+/LOG.md
+/references/provider-rules.md
+
+# Generated artefacts (per-account)
+/gmail-filters.xml
+/email-receive-rules.md
+
+# OS / editor noise
+.DS_Store
+.vscode/
+.idea/

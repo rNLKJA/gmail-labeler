@@ -1,0 +1,36 @@
+# Gmail Labeler — weekly triage via GitHub Actions
+#
+# ADVANCED: requires a hosted Gmail MCP gateway and agent runtime.
+# This workflow only shows the schedule shape — you must wire secrets and
+# a runner that can reach your Gmail MCP endpoint.
+#
+# Secrets needed (example):
+#   GMAIL_MCP_URL, GMAIL_MCP_TOKEN, AGENT_API_KEY
+
+name: Weekly Gmail triage
+
+on:
+  schedule:
+    # Sundays 09:00 UTC
+    - cron: '0 9 * * 0'
+  workflow_dispatch:
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout skill
+        uses: actions/checkout@v4
+        with:
+          repository: rNLKJA/gmail-labeler
+
+      - name: Run weekly triage
+        env:
+          GMAIL_MCP_URL: ${{ secrets.GMAIL_MCP_URL }}
+          GMAIL_MCP_TOKEN: ${{ secrets.GMAIL_MCP_TOKEN }}
+        run: |
+          echo "Wire your agent CLI + Gmail MCP here."
+          echo "Prompt file: examples/prompts/weekly-triage.md"
+          # Example (adjust to your setup):
+          # cursor-agent run --skill gmail-labeler \
+          #   --prompt-file examples/prompts/weekly-triage.md

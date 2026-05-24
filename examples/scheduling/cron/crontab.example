@@ -1,0 +1,15 @@
+# Gmail Labeler — weekly cron example
+#
+# Runs every Sunday at 09:00 local time.
+#
+# Assumptions:
+# - cursor-agent is at /usr/local/bin/cursor-agent (adjust path)
+# - Skill installed at ~/.cursor/skills/gmail-labeler/
+# - Gmail MCP configured in agent environment
+#
+# Install: crontab -e, then paste the line below.
+
+0 9 * * 0 /usr/local/bin/cursor-agent run --skill gmail-labeler --prompt-file ~/.cursor/skills/gmail-labeler/examples/prompts/weekly-triage.md >> ~/Library/Logs/gmail-labeler.log 2>&1
+
+# Linux equivalent (log to /var/log or home):
+# 0 9 * * 0 /usr/local/bin/cursor-agent run --skill gmail-labeler --prompt-file ~/.cursor/skills/gmail-labeler/examples/prompts/weekly-triage.md >> ~/.local/log/gmail-labeler.log 2>&1
