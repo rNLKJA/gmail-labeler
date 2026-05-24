@@ -1,6 +1,6 @@
 ---
 name: email-labeler
-version: 1.1.0
+version: 1.1.1
 description: Triage and label Gmail by sender/provider so the inbox shows only what matters, and generate importable Gmail filter rules (sender → label) to auto-categorise future mail. Use this skill whenever the user wants to label, sort, file, organize, tidy, or "triage" their Gmail; clean up or clear the inbox; auto-file newsletters, marketing, receipts, or subscription mail by provider; find which senders have no label yet; or build email "rules"/filters that automatically categorise incoming email. Trigger on phrases like "label my email", "sort my inbox", "file my subscriptions", "who don't I have a label for", "archive the junk", "run my email triage", or "draft email rules to auto-categorise" — even when the user doesn't name a specific provider.
 ---
 
@@ -78,12 +78,13 @@ Use this workflow when the user has never run the skill, or wants to rebuild the
 sender→label map from scratch.
 
 1. **Scan sender addresses across the cutoff window.** Build scope from
-   `lookback_days` (default `365`): `newer_than:{N}d -in:sent -in:chats -in:draft`.
-   For gap-fill use `has:nouserlabels -in:sent -in:chats -in:draft` (optionally
-   with `newer_than:{N}d`). Paginate through all results.
-   - **Why a cutoff?** Full-mailbox scans are expensive and slow. Most signal
-     lives in the last 12 months. The user can set `lookback_days: 30` for a
-     shorter first pass, or widen to `730` (two years) once happy with the taxonomy.
+   `lookback_days` (default **`90`** — three months): `newer_than:{N}d -in:sent
+   -in:chats -in:draft`. For gap-fill prefer
+   `has:nouserlabels newer_than:{N}d -in:sent -in:chats -in:draft` over a full
+   date scan when possible. Paginate through results.
+   - **Why 90 days default?** Most active senders appear in the last three months.
+     Shorter window = fewer threads read = lower token cost. Widen to `180` or
+     `365` only when the user explicitly asks for a longer history pass.
 2. **Build a 1:1 sender → label map.** For every distinct sender domain, map to
    a provider label. Strip mail-vendor prefixes (`mail.`, `email.`, `e.`,
    `info.`, `comms.`, `notify.`, `news.`, `updates.`, `txn.`) to find the real
@@ -142,9 +143,9 @@ re-archive, re-read, or change keep/archive. Gmail filters handle most future ma
 automatically; the agent catches unlabeled inbox mail (new senders, filter gaps).
 
 **Explicit backfill only:** to label old mail or fix gaps (`has:nouserlabels`,
-`newer_than:1y`, a date range, or "re-scan my mailbox"), the user must ask for
-**backfill / gap-fill mode** — that is first-time-setup behaviour, not a returning
-run. Do not widen scope silently on scheduled or weekly runs.
+`newer_than:{lookback_days}d`, a date range, or "re-scan my mailbox"), the user
+must ask for **backfill / gap-fill mode** — that is first-time-setup behaviour,
+not a returning run. Do not widen scope silently on scheduled or weekly runs.
 
 The user may override scope, but default to inbox-only unless they explicitly
 request backfill.
@@ -177,11 +178,11 @@ thread entirely** — no `label_thread`, no `unlabel_thread`, no body fetch. Thi
 applies to:
 
 - **Returning runs** (inbox-only scope)
-- **First-time setup / backfill** within the cutoff window (`newer_than:1y`, etc.)
+- **First-time setup / backfill** within the cutoff window (`newer_than:90d`, etc.)
 
 The cutoff defines *which mail to consider*; rule-satisfied skip defines *which
 threads within that window still need work*. A thread labeled correctly last week
-inside a `newer_than:1y` scan is skipped, not re-processed.
+inside a `newer_than:{lookback_days}d` scan is skipped, not re-processed.
 
 **Wrong or partial labels:** if the thread has a different provider label but not
 the expected one, do **not** skip — file under the expected label (and report the
@@ -222,7 +223,7 @@ uses under a different name.
 This skill runs against a connected Gmail MCP. Tool names may be prefixed with a
 connection-specific hash, so identify them by capability:
 
-- **search_threads** — find threads with a Gmail query (e.g. `newer_than:1y`).
+- **search_threads** — find threads with a Gmail query (e.g. `newer_than:90d`).
   Returns sender, subject, snippet, and `labelIds` per message. This is your
   main input; the snippet + subject + sender is usually enough to classify without
   opening the message.
@@ -254,7 +255,7 @@ empty leftover and set colours themselves.
 
 | Parameter | Default | Maps to | Used in |
 |---|---|---|---|
-| `lookback_days` | `365` | `newer_than:{N}d` | First-time setup, backfill |
+| `lookback_days` | **`90`** (3 months) | `newer_than:{N}d` | First-time setup, backfill |
 | `catch_up_days` | `7` | `has:nouserlabels newer_than:{N}d` | Returning catch-up (opt-in) |
 | `dry_run` | `true` on first scope | — | All modes |
 
@@ -264,13 +265,50 @@ empty leftover and set colours themselves.
   - **Returning runs:** `in:inbox -in:sent -in:chats -in:draft`.
   - **Catch-up (opt-in):** `has:nouserlabels newer_than:{catch_up_days}d -in:sent
     -in:chats -in:draft`.
-  - Natural language: "last 30 days" → `lookback_days: 30`.
+  - Natural language: "last 3 months" → `lookback_days: 90`; "last 30 days" → `30`.
 - **Dry run** — when `dry_run: true`:
   - **Allowed:** `search_threads`, `list_labels`, `get_thread` (read only).
   - **Forbidden:** `create_label`, `label_thread`, `unlabel_thread` (no Gmail mutations).
   - Report: proposed masters (on demand), labels to create, threads to file,
     rule-satisfied skip count, keep/archive decisions.
   - Default dry run on first use of a new scope; act after user confirms.
+
+## Token efficiency (best practices)
+
+Every run should minimise tokens spent on mail the system already handles.
+
+**Scope (biggest lever)**
+- Default **`lookback_days: 90`** — three months, not a full year.
+- **Returning runs:** `in:inbox` only; zero threads processed is OK when filters work.
+- **Backfill:** prefer `has:nouserlabels newer_than:{N}d` over scanning all mail in range.
+- Widen lookback only when the user explicitly asks (e.g. "go back 12 months").
+
+**Read less per thread**
+- Classify from **sender + subject + snippet** returned by `search_threads`. Do not
+  call `get_thread` unless genuinely ambiguous.
+- Do not open attachment contents (policy + token savings).
+
+**Skip work already done**
+- **Rule-satisfied skip** before any label/archive action.
+- After first setup, let **Gmail filters** (imported `gmail-filters.xml` with
+  "Apply to existing conversations") label historical backlog — the agent builds
+  the rule table and filters file; Gmail applies bulk labelling without the agent
+  re-reading every old thread.
+
+**Efficient first-time setup (recommended)**
+1. **Dry run:** paginate `search_threads`, collect **distinct sender domains** only,
+   build `provider-rules.md` + filter plan. Skip domains already rule-satisfied.
+2. **Confirm** with user.
+3. **Apply** labels only to **gaps** in scope (unlabeled threads), not every thread.
+4. **Generate + import filters** — filters clear most remaining backlog in one Gmail
+   import without another agent pass.
+
+**Reporting**
+- End with **aggregate counts**, not a per-email list (see report structure).
+
+**Persist rules**
+- Write decisions to `provider-rules.md` and `MEMORY.md` so later runs need less
+  reasoning from scratch.
 
 ## Persistent files (read/write these every run)
 
@@ -464,7 +502,7 @@ status is a record → keep in inbox.
 If the thread already has `Subscriptions/YouTube`, skip (rule satisfied).
 
 **Example 5 — cutoff scan, rule already satisfied**
-Input: from `newsletter@spotify.com`, scope `newer_than:1y`, thread already has
+Input: from `newsletter@spotify.com`, scope `newer_than:90d`, thread already has
 `Subscriptions/Spotify` (matches rule + content type).
 Action: skip entirely — do not re-label or re-archive.
 

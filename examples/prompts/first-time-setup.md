@@ -5,8 +5,8 @@ Copy and paste into Cursor or Claude:
 ```text
 Run the gmail-labeler skill in first-time setup mode.
 
-lookback_days: 365
-Scope: newer_than:365d -in:sent -in:chats -in:draft
+lookback_days: 90
+Scope: newer_than:90d -in:sent -in:chats -in:draft
 Dry run: true
 
 Goal: build my 1:1 sender→label map and report it before applying.
@@ -25,8 +25,7 @@ Steps:
    Remind me to import gmail-filters.xml in Gmail.
 ```
 
-Adjust `lookback_days` and scope together (e.g. `lookback_days: 90` →
-`newer_than:90d`).
+Adjust `lookback_days` and scope together (default 90). Widen to 365 only if needed.
 
 ## Expected output
 

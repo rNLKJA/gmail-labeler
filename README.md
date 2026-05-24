@@ -26,7 +26,7 @@ Gmail Labeler is an agent skill for [Cursor](https://cursor.com), [Claude](https
 
 The skill runs through a Gmail MCP connector. Your agent reads sender addresses, subjects, and snippets, matches them to a label taxonomy you control, and applies labels in bulk. Receipts and account records stay visible. Marketing and digests get labelled and archived so they remain searchable without cluttering the inbox. Nothing is deleted. Attachment filenames can be used for context; attachment contents are never opened.
 
-On the first run, the skill scans up to twelve months of mail, **creates master category labels** (Shopping, Subscriptions, Banking, and so on) so nested provider labels sit under a clean sidebar tree, builds a one-to-one sender-to-label map, creates any missing child labels, and generates an importable `gmail-filters.xml` file. Within the cutoff window, **threads that already have the expected label from the rules are skipped**. After that, **returning runs only triage incoming inbox mail** with the same skip rule. Gmail filters handle most new mail automatically. Your personal rules live in local files (`MEMORY.md`, `provider-rules.md`, `LOG.md`) that never leave your machine.
+On the first run, the skill scans the **last three months** of mail (default `lookback_days: 90`), **creates master category labels** on demand, builds a sender-to-label map, generates `gmail-filters.xml`, and **skips mail that already satisfies the rule**. Import filters once to label older backlog without the agent re-reading every thread. **Returning runs** triage **inbox only**. Your personal rules live in local files (`MEMORY.md`, `provider-rules.md`, `LOG.md`) that never leave your machine.
 
 ## Who this is for
 
@@ -96,14 +96,15 @@ flowchart TD
   FiltersOut -->|import once| GmailImport[Gmail filters]
 ```
 
-**First-time setup** scans mail within `lookback_days` (default 365), creates master labels **on demand**, builds a sender-to-label map, and runs `scripts/generate_filters.py` — **skipping mail that already satisfies the rule**. **Returning runs** process **inbox only** with the same skip. See [VERSION.md](VERSION.md) for the feature matrix.
+**First-time setup** scans mail within `lookback_days` (default **90** — three months), creates master labels **on demand**, builds a sender-to-label map, and runs `scripts/generate_filters.py`. Import filters to handle older mail without a long agent scan. **Returning runs** process **inbox only** with rule-satisfied skip. See [VERSION.md](VERSION.md).
 
 ## Core behaviour
 
 - **Labels mail by provider.** Every recognisable sender gets a nested label (`Shopping/Amazon`, `Subscriptions/Spotify`, `Banking/PayPal`, and so on).
 - **Keeps records, archives noise.** Receipts, bills, and government mail stay in the inbox. Newsletters and promos are labelled then archived.
 - **Generates importable Gmail filters** via `scripts/generate_filters.py` — re-import when rules change.
-- **Parameterised lookback.** Set `lookback_days: 90` for a 90-day first pass; `catch_up_days: 7` for opt-in catch-up on inbox-zero accounts.
+- **Parameterised lookback.** Default three months (`lookback_days: 90`). Widen only when you need older history.
+- **Token-efficient by design.** Snippet-only classification, rule-satisfied skip, filters for bulk backlog — see SKILL.md § Token efficiency.
 - **Learns over time.** New senders go in `provider-rules.md`; precedents in `MEMORY.md`; every run logged in `LOG.md`.
 
 ## What your Gmail looks like after
@@ -242,11 +243,19 @@ After pulling updates:
 
 | Parameter | Default | Example scope |
 |---|---|---|
-| `lookback_days` | `365` | `newer_than:365d -in:sent -in:chats -in:draft` |
+| `lookback_days` | **`90`** (3 months) | `newer_than:90d -in:sent -in:chats -in:draft` |
 | `catch_up_days` | `7` | `has:nouserlabels newer_than:7d …` (opt-in) |
 | `dry_run` | `true` on first scope | No Gmail mutations when true |
 
-Natural language works: *"last 30 days"* → `lookback_days: 30`.
+Natural language: *"last 3 months"* → `lookback_days: 90`. Widen to `365` only if you need a full year.
+
+### Saving tokens
+
+1. **Keep the default 90-day window** for first-time setup — covers most active senders.
+2. **Import `gmail-filters.xml`** with "Apply to existing conversations" so Gmail labels old mail without the agent reading every thread.
+3. **Weekly runs use `in:inbox` only** — cheap once filters are in place.
+4. **Dry run first** on any new scope before mutating labels.
+5. **Backfill with `has:nouserlabels`** instead of re-scanning all mail in a date range.
 
 ## Usage — first run
 
@@ -254,10 +263,10 @@ Paste this into your agent:
 
 ```text
 Run the gmail-labeler skill in first-time setup mode.
-lookback_days: 365
-Scope: newer_than:365d -in:sent -in:chats -in:draft
+lookback_days: 90
+Scope: newer_than:90d -in:sent -in:chats -in:draft
 Dry run: true
-Goal: build my 1:1 sender→label map and report it before applying.
+Goal: build my sender→label map (distinct domains first), report, then apply gaps + filters.
 ```
 
 Expected output: distinct senders, masters on demand, rule-satisfied skip count,

@@ -5,8 +5,8 @@ Use when old mail still needs labels. **Not** for weekly returning runs.
 ```text
 Run the gmail-labeler skill in backfill / gap-fill mode (first-time-setup workflow).
 
-lookback_days: 365
-Scope: has:nouserlabels newer_than:365d -in:sent -in:chats -in:draft
+lookback_days: 90
+Scope: has:nouserlabels newer_than:90d -in:sent -in:chats -in:draft
 Dry run: true
 
 Find mail without the expected provider label. Skip threads where

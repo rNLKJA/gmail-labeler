@@ -1,6 +1,6 @@
 # Version & feature matrix
 
-**Current version:** 1.1.0
+**Current version:** 1.1.1
 
 See [CHANGELOG.md](CHANGELOG.md) for release notes.
 
@@ -8,7 +8,8 @@ See [CHANGELOG.md](CHANGELOG.md) for release notes.
 
 | Feature | Version | Status | Notes |
 |---|---|---|---|
-| First-time cutoff labelling | 1.0.0 | shipped | Default `lookback_days: 365` |
+| First-time cutoff labelling | 1.0.0 | shipped | Default `lookback_days: 90` (from 1.1.1) |
+| Token efficiency guide | 1.1.1 | shipped | SKILL.md § Token efficiency |
 | Master label taxonomy | 1.0.0 | shipped | On-demand from 1.1.0 |
 | Rule-satisfied skip | 1.0.0 | shipped | Skip when expected label applied |
 | Inbox-only returning runs | 1.0.0 | shipped | Default `in:inbox` scope |
