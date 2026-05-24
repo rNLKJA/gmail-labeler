@@ -17,6 +17,8 @@ Triage your Gmail by provider, with importable filters.
   <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-blue?style=for-the-badge" alt="License: GPL v3"></a>
 </p>
 
+> **Sponsor on GitHub:** use the **Sponsor** button (heart icon) on the repo homepage — it links to [buymeacoffee.com/rnlkja](https://buymeacoffee.com/rnlkja) via [`.github/FUNDING.yml`](.github/FUNDING.yml).
+
 ## How it works
 
 ```mermaid
