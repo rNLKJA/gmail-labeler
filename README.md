@@ -3,16 +3,17 @@
 Triage your Gmail by provider, with importable filters.
 
 <p align="center">
-  <a href="https://buymeacoffee.com/rnlkja" target="_blank" rel="noopener noreferrer">
-    <img
-      src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=%E2%98%95&slug=rnlkja&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff"
-      alt="Buy me a coffee"
-    />
+  <img src="assets/gmail-labeler-banner.png" alt="Gmail Labeler — from chaotic inbox to organised labels" width="800">
+</p>
+
+<p align="center">
+  <a href="https://buymeacoffee.com/rnlkja">
+    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" height="50">
   </a>
 </p>
 
 <p align="center">
-  <a href="https://buymeacoffee.com/rnlkja"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-rnlkja-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me a Coffee badge"></a>
+  <a href="https://buymeacoffee.com/rnlkja"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-rnlkja-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me a Coffee"></a>
   <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-blue?style=for-the-badge" alt="License: GPL v3"></a>
 </p>
 
@@ -268,12 +269,9 @@ GPL-3.0.
 ## Support
 
 <p align="center">
-  <a href="https://buymeacoffee.com/rnlkja" target="_blank" rel="noopener noreferrer">
-    <img
-      src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=%E2%98%95&slug=rnlkja&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff"
-      alt="Buy me a coffee"
-    />
+  <a href="https://buymeacoffee.com/rnlkja">
+    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" height="50">
   </a>
 </p>
 
-If this skill saves you time, a coffee helps keep it maintained.
+If this skill saves you time, a coffee helps keep it maintained — [buymeacoffee.com/rnlkja](https://buymeacoffee.com/rnlkja).
