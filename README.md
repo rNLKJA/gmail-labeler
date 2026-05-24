@@ -18,6 +18,60 @@
   </a>
 </p>
 
+> ## ⚠️ Important — read before you install
+>
+> **This skill gives an AI agent access to your Gmail.** That is powerful and
+> genuinely risky if you skip the fine print. Please read this section before
+> connecting your mailbox.
+>
+> ### What actually happens to your mail
+>
+> - Your **agent** (Cursor, Claude, Codex, or similar) uses a **Gmail MCP
+>   connector** to search threads, read **sender, subject, snippet, and often
+>   message body text**, and apply or remove labels.
+> - That content may be sent to the **LLM provider** that powers your agent
+>   (OpenAI, Anthropic, etc.), depending on how your tool is configured. **This
+>   repository does not control, host, or see your mail.** Only you and your
+>   chosen agent stack do.
+> - The skill is designed **not** to open attachment contents (PDFs, images,
+>   documents). Filenames may still appear in metadata. Treat every run as
+>   handling **private data**: receipts, tax notices, health mail, login codes,
+>   and personal correspondence.
+> - The skill can **add labels**, **create labels**, and **remove the INBOX label
+>   (archive)**. It does **not** delete mail, send mail, or mark messages read —
+>   but mis-labelling or archiving something you needed in the inbox is still a
+>   real failure mode. **Start with `dry_run: true`.**
+>
+> ### What this project is — and is not
+>
+> - **Not affiliated with Google or Gmail.** Gmail Labeler is an independent
+>   open-source skill (GPL-3.0). Google’s names and products are trademarks of
+>   their respective owners.
+> - **Not a hosted service.** There is no cloud backend, no account on our
+>   servers, and no telemetry in this repo. Your rules live in local files
+>   (`MEMORY.md`, `provider-rules.md`, `LOG.md`) that you control.
+> - **Not professional advice.** Use at your own discretion. If your inbox
+>   contains confidential work mail, legal, medical, or government-sensitive
+>   material, consider a **dedicated test account**, strict MCP permissions, or
+>   manual filters instead.
+> - **No warranty.** Software is provided as-is. The author is not liable for
+>   misfiled mail, missed bills, or any loss arising from use of this skill.
+>
+> ### Before your first live run
+>
+> 1. Read `SKILL.md` → **Security & data access** and `references/email-policy.md`.
+> 2. Run a **dry run** (`examples/prompts/dry-run.md`) and review the plan.
+> 3. Confirm you trust your **MCP package**, **agent**, and **model provider**
+>    with the mail you put in scope.
+> 4. Import `gmail-filters.xml` only after you are happy with the rule table.
+>
+> **Support via Buy Me a Coffee is voluntary and does not change any of the
+> above.** It helps maintain the project; it is not a subscription, a hosted
+> service, or an endorsement of how you configure AI access to your inbox.
+>
+> If this feels like too much access, **do not install the skill.** Manual Gmail
+> filters or inbox rules may be a better fit.
+
 <!-- > **Sponsor on GitHub:** use the **Sponsor** button (heart icon) on the repo homepage. It links to [buymeacoffee.com/rnlkja](https://buymeacoffee.com/rnlkja) via [`.github/FUNDING.yml`](.github/FUNDING.yml). -->
 
 ## About Gmail Labeler
