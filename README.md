@@ -6,7 +6,7 @@
 
 <h1 align='center'>Gmail Labeler</h1>
 
-Triage your Gmail by provider, with importable filters.
+<p align="center"><strong>Triage your Gmail by provider, with importable filters.</strong></p>
 
 <p align="center">
   <img src="assets/gmail-labeler-banner.png" alt="Gmail Labeler — from chaotic inbox to organised labels" width="800">
@@ -18,6 +18,39 @@ Triage your Gmail by provider, with importable filters.
   </a>
 </p>
 
+> **Sponsor on GitHub:** use the **Sponsor** button (heart icon) on the repo homepage. It links to [buymeacoffee.com/rnlkja](https://buymeacoffee.com/rnlkja) via [`.github/FUNDING.yml`](.github/FUNDING.yml).
+
+## About Gmail Labeler
+
+Gmail Labeler is an agent skill for [Cursor](https://cursor.com), [Claude](https://claude.ai), and [Codex](https://developers.openai.com/codex/) that files your mail by the company or service that sent it. Newsletters, receipts, subscription renewals, bank alerts, and grocery confirmations each land under a nested label (for example `Shopping/Amazon`, `Subscriptions/Spotify`, or `Banking/PayPal`). What stays in your inbox, by design, is the mail that actually needs you: a bill due this week, a government notice, or a message from a real person.
+
+The skill runs through a Gmail MCP connector. Your agent reads sender addresses, subjects, and snippets, matches them to a label taxonomy you control, and applies labels in bulk. Receipts and account records stay visible. Marketing and digests get labelled and archived so they remain searchable without cluttering the inbox. Nothing is deleted. Attachment filenames can be used for context; attachment contents are never opened.
+
+On the first run, the skill scans up to twelve months of mail, builds a one-to-one sender-to-label map, creates any missing labels, and generates an importable `gmail-filters.xml` file. After that, a weekly seven-day sweep catches new senders while existing rules handle the rest. Your personal rules live in local files (`MEMORY.md`, `provider-rules.md`, `LOG.md`) that never leave your machine.
+
+## Who this is for
+
+This skill suits you if:
+
+- Your inbox mixes bills, newsletters, order confirmations, and job alerts in one unread pile.
+- You already use labels in Gmail (or want to) and prefer filing by provider rather than by date alone.
+- You run an AI coding agent with MCP and want repeatable email triage without manual filter setup for every new sender.
+- You want a starter rule set (~100 globally recognised brands) that you can customise for your own mailbox.
+
+If you only receive a handful of emails per week and never use labels, manual Gmail filters may be enough. Gmail Labeler pays off when volume is high and senders repeat.
+
+## What you get out of the box
+
+| Deliverable | What it does |
+|---|---|
+| `SKILL.md` | Step-by-step method the agent follows on every run |
+| `references/provider-rules.template.md` | Starter sender-to-label table across banking, grocery, subscriptions, travel, bills, and more |
+| `references/email-policy.md` | Category actions (keep, archive, notify, skip) and safety rules |
+| `examples/prompts/` | Copy-paste prompts for first-time setup, weekly triage, and dry runs |
+| `examples/scheduling/` | launchd, cron, and GitHub Actions templates for Sunday triage |
+| Generated `gmail-filters.xml` | One Gmail import to label existing mail and auto-file future mail |
+
+After setup, a typical inbox drops from hundreds of unread threads to a short list of actionable items, with everything else filed under organised labels in the sidebar.
 
 ## How it works
 
@@ -66,18 +99,14 @@ flowchart TD
   Label --> Inbox
 ```
 
-**First-time setup** scans the last year of mail, builds a 1:1 sender→label map, creates
-labels, and generates importable Gmail filters. **Returning runs** read your saved
-rules and only reason from scratch for new senders — typically a weekly 7-day sweep.
+**First-time setup** scans the last year of mail, builds a one-to-one sender-to-label map, creates labels, and generates importable Gmail filters. **Returning runs** read your saved rules and only reason from scratch for new senders, usually as a weekly seven-day sweep.
 
-## What it does
+## Core behaviour
 
-- **Labels mail by provider** — every recognisable sender gets a nested label
-  (Shopping/Amazon, Subscriptions/Spotify, Banking/PayPal, …).
-- **Keep vs archive intelligently** — receipts, bills, and government mail stay
-  in the inbox; newsletters and promos get labelled then archived.
-- **Generates importable Gmail filters** — one import clears the backlog and
-  auto-categorises future mail.
+- **Labels mail by provider.** Every recognisable sender gets a nested label (`Shopping/Amazon`, `Subscriptions/Spotify`, `Banking/PayPal`, and so on).
+- **Keeps records, archives noise.** Receipts, bills, and government mail stay in the inbox. Newsletters and promos are labelled then archived.
+- **Generates importable Gmail filters.** One import in Gmail Settings clears the backlog and auto-categorises future mail.
+- **Learns over time.** New senders are added to `provider-rules.md`; precedents go in `MEMORY.md`; every run is logged in `LOG.md`.
 
 ## What your Gmail looks like after
 
@@ -86,11 +115,11 @@ rules and only reason from scratch for new senders — typically a weekly 7-day 
 ```text
 INBOX (1,247 unread)
   Spotify Family Plan renewal notice
-  TLDR — "5 stories from your day"
+  TLDR: "5 stories from your day"
   AGL Energy bill is due in 5 days
   Amazon: Your order has shipped
   Booking.com: 30% off your next stay
-  ATO — Notice of assessment
+  ATO: Notice of assessment
   Patreon: Weekly digest from 4 creators
   GitHub: 12 notifications
   ... (1,239 more)
@@ -103,9 +132,9 @@ promo and a digest.
 
 ```text
 INBOX (3)
-  AGL Energy bill is due in 5 days       (kept — actionable)
-  ATO — Notice of assessment             (kept — government record)
-  Mum: dinner Sunday?                    (kept — personal)
+  AGL Energy bill is due in 5 days       (kept, actionable)
+  ATO: Notice of assessment              (kept, government record)
+  Mum: dinner Sunday?                    (kept, personal)
 
 Labels (sidebar):
   Banking/
@@ -297,4 +326,4 @@ GPL-3.0.
   </a>
 </p>
 
-If this skill saves you time, a coffee helps keep it maintained — [buymeacoffee.com/rnlkja](https://buymeacoffee.com/rnlkja).
+If this skill saves you time, a coffee helps keep it maintained. Visit [buymeacoffee.com/rnlkja](https://buymeacoffee.com/rnlkja) or use the **Sponsor** button on this repo.
