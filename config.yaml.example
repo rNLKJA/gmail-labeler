@@ -1,0 +1,8 @@
+# Optional run configuration
+# Copy to config.yaml and customise. Prompt parameters override these values.
+
+lookback_days: 90
+catch_up_days: 7
+max_threads: 50          # cap threads per pass; omit or null for unlimited
+dry_run: false
+create_all_masters: false

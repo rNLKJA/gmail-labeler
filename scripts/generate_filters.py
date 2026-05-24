@@ -169,6 +169,11 @@ def main() -> int:
         help="Directory for gmail-filters.xml and email-receive-rules.md (default: .)",
     )
     parser.add_argument("--dry-run", action="store_true", help="Print rule count only")
+    parser.add_argument(
+        "--log-summary",
+        action="store_true",
+        help="Print one-line summary for LOG.md (rules count and output path)",
+    )
     parser.add_argument("--title", default="Mail Filters — Gmail Labeler", help="XML feed title")
     args = parser.parse_args()
 
@@ -186,13 +191,15 @@ def main() -> int:
     keep_n = len(rules) - archive_n
     print(f"Parsed {len(rules)} rules ({archive_n} archive, {keep_n} keep) from {rules_path}")
 
+    out_dir = Path(args.output_dir)
+    xml_path = out_dir / "gmail-filters.xml"
+
     if args.dry_run:
+        if args.log_summary:
+            print(f"Rules: {len(rules)} | Output: {xml_path.resolve()}")
         return 0
 
-    out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-
-    xml_path = out_dir / "gmail-filters.xml"
     md_path = out_dir / "email-receive-rules.md"
 
     xml_path.write_text(build_xml(rules, title=args.title), encoding="utf-8")
@@ -200,6 +207,8 @@ def main() -> int:
 
     print(f"Wrote {xml_path}")
     print(f"Wrote {md_path}")
+    if args.log_summary:
+        print(f"Rules: {len(rules)} | Output: {xml_path.resolve()}")
     return 0
 
 

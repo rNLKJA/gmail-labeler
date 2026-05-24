@@ -47,8 +47,10 @@ If you only receive a handful of emails per week and never use labels, manual Gm
 | `references/provider-rules.template.md` | Starter sender-to-label table across banking, grocery, subscriptions, travel, bills, and more |
 | `references/email-policy.md` | Category actions (keep, archive, notify, skip) and safety rules |
 | `examples/prompts/` | Copy-paste prompts for first-time setup, weekly inbox triage, backfill, dry runs, fix-wrong-labels |
+| `examples/minimal/` | 10-brand rules file for a quick dry-run |
 | `examples/scheduling/` | launchd, cron, and GitHub Actions templates for Sunday triage |
 | `scripts/generate_filters.py` | Deterministic `gmail-filters.xml` generator |
+| `scripts/validate_rules.py` | Lint `provider-rules.md` before generating filters |
 | Generated `gmail-filters.xml` | One Gmail import to label existing mail and auto-file future mail |
 
 After setup, a typical inbox drops from hundreds of unread threads to a short list of actionable items, with everything else filed under organised labels in the sidebar.
@@ -104,7 +106,7 @@ flowchart TD
 - **Keeps records, archives noise.** Receipts, bills, and government mail stay in the inbox. Newsletters and promos are labelled then archived.
 - **Generates importable Gmail filters** via `scripts/generate_filters.py` — re-import when rules change.
 - **Parameterised lookback.** Default three months (`lookback_days: 90`). Widen only when you need older history.
-- **Token-efficient by design.** Snippet-only classification, rule-satisfied skip, filters for bulk backlog — see SKILL.md § Token efficiency.
+- **Token-efficient by design.** Domain dedupe, snippet-only reads, rule-satisfied skip, `max_threads` cap — see `references/token-efficiency.md`.
 - **Learns over time.** New senders go in `provider-rules.md`; precedents in `MEMORY.md`; every run logged in `LOG.md`.
 
 ## What your Gmail looks like after
@@ -245,9 +247,22 @@ After pulling updates:
 |---|---|---|
 | `lookback_days` | **`90`** (3 months) | `newer_than:90d -in:sent -in:chats -in:draft` |
 | `catch_up_days` | `7` | `has:nouserlabels newer_than:7d …` (opt-in) |
+| `max_threads` | unlimited | Cap pagination (suggest **50** for dry runs) |
 | `dry_run` | `true` on first scope | No Gmail mutations when true |
 
+Optional `config.yaml` — copy from `config.yaml.example`. Prompt parameters override the file.
+
 Natural language: *"last 3 months"* → `lookback_days: 90`. Widen to `365` only if you need a full year.
+
+### Try in 10 minutes
+
+```bash
+cp examples/minimal/provider-rules.minimal.md references/provider-rules.md
+python scripts/validate_rules.py references/provider-rules.md
+python scripts/generate_filters.py references/provider-rules.md --dry-run --log-summary
+```
+
+Then paste `examples/prompts/dry-run.md` into your agent with Gmail MCP connected.
 
 ### Saving tokens
 
@@ -256,6 +271,8 @@ Natural language: *"last 3 months"* → `lookback_days: 90`. Widen to `365` only
 3. **Weekly runs use `in:inbox` only** — cheap once filters are in place.
 4. **Dry run first** on any new scope before mutating labels.
 5. **Backfill with `has:nouserlabels`** instead of re-scanning all mail in a date range.
+6. **Domain dedupe** on first-time setup — classify each sender domain once.
+7. **`max_threads: 50`** on dry runs to preview without reading the whole mailbox.
 
 ## Usage — first run
 
@@ -303,22 +320,57 @@ Three options — pick one:
 Each file notes the assumptions it makes (CLI binary, env vars, MCP endpoint).
 You need a working agent CLI (`cursor-agent`, `claude`, `codex`, or equivalent) on PATH.
 
+**macOS launchd checklist:**
+
+1. Copy `examples/scheduling/launchd/com.rNLKJA.gmail-labeler.weekly.plist` to `~/Library/LaunchAgents/`.
+2. Replace `REPLACE_ME` in `StandardOutPath` / `StandardErrorPath` with your username.
+3. Confirm `cursor-agent` (or your CLI) is on PATH for non-interactive runs.
+4. Test manually: `cursor-agent run --skill gmail-labeler --prompt-file ~/.cursor/skills/gmail-labeler/examples/prompts/weekly-triage.md`
+5. Load: `launchctl load ~/Library/LaunchAgents/com.rNLKJA.gmail-labeler.weekly.plist`
+6. Logs append to `~/Library/Logs/gmail-labeler.log` — rotate or truncate periodically.
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| OAuth / MCP auth fails | Missing `gcp-oauth.keys.json` | [Gmail MCP setup](#gmail-mcp-setup-about-5-minutes) |
+| `validate_rules.py` errors | Typo in rules table | Fix `Domain` / `Default` / duplicate rows; re-run validator |
+| 0 threads on returning run | Filters working; inbox empty | Expected for inbox-zero; use catch-up only when you ask |
+| Duplicate filters after re-import | Gmail merges by criteria | Delete old filters in Gmail or diff XML before import |
+| Wrong labels on PayPal merchants | One domain, many merchants | Use fix-wrong-labels mode; `content_type` + subject in rules |
+| Generator "no rules parsed" | Empty or malformed table | Ensure `\| Domain \|` header and rows before `## Always skip` |
+| CI / version mismatch | SKILL vs VERSION.md drift | Keep frontmatter `version:` in sync with `VERSION.md` |
+
+## Optional regional packs
+
+Copy sections from `templates/taxonomy-au.md` or `templates/taxonomy-us.md` into
+`MEMORY.md` or `references/provider-rules.md` when your mailbox is AU- or US-centric.
+They are examples only — not loaded automatically.
+
 ## Files
 
 | File | Purpose |
 |---|---|
-| `SKILL.md` | The method — read first by the agent (v1.1.0) |
+| `SKILL.md` | The method — read first by the agent (v1.3.0) |
 | `README.md` | This file |
 | `VERSION.md` | Feature matrix and current version |
 | `CHANGELOG.md` | Release history |
+| `CONTRIBUTING.md` | How to contribute and run local checks |
 | `LICENSE` | GPL-3.0 |
 | `scripts/generate_filters.py` | Rules → `gmail-filters.xml` + `email-receive-rules.md` |
+| `scripts/validate_rules.py` | Lint provider rules before generation |
 | `scripts/build-skill.sh` | Rebuild `email-labeler.skill` zip |
+| `references/run-modes.md` | Run modes, parameters, fix-wrong-labels |
+| `references/token-efficiency.md` | Domain dedupe, max_threads, filter strategy |
 | `references/email-policy.md` | Category actions and safety rules |
 | `references/provider-rules.template.md` | Starter sender→label table (~200 rules) |
+| `templates/taxonomy-au.md` | Optional AU regional taxonomy |
+| `templates/taxonomy-us.md` | Optional US regional taxonomy |
+| `config.yaml.example` | Optional run defaults |
 | `MEMORY.template.md` | Scaffold for account-specific precedents |
 | `LOG.template.md` | Scaffold for run history |
 | `examples/prompts/` | First-time, weekly, backfill, dry-run, fix-wrong-labels |
+| `examples/minimal/` | 10-brand quickstart rules |
 | `examples/scheduling/` | launchd, cron, GitHub Actions templates |
 
 Working copies (`MEMORY.md`, `LOG.md`, `references/provider-rules.md`) are
@@ -357,14 +409,15 @@ Anything beyond that boundary depends on your chosen MCP and agent runtime.
 - Regenerate filters after rule changes:
 
 ```bash
-python scripts/generate_filters.py references/provider-rules.md --output-dir .
+python scripts/validate_rules.py references/provider-rules.md
+python scripts/generate_filters.py references/provider-rules.md --output-dir . --log-summary
 ```
 
-Re-import `gmail-filters.xml` in Gmail when the run report says rules changed.
+Re-import `gmail-filters.xml` in Gmail when the run report or LOG rule count changes.
 
 ## Contributing
 
-Issues and pull requests welcome. This project is licensed under GPL-3.0 — if you
+See [CONTRIBUTING.md](CONTRIBUTING.md). Issues and pull requests welcome. This project is licensed under GPL-3.0 — if you
 build on top of it, your derivative work must also be released under GPL-3.0.
 
 ## License

@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate provider-rules template
+        run: python3 scripts/validate_rules.py references/provider-rules.template.md
+
+      - name: Validate test fixture
+        run: python3 scripts/validate_rules.py tests/fixtures/provider-rules.fixture.md
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run unit tests
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
+
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build skill zip
+        run: bash scripts/build-skill.sh -o /tmp/email-labeler.skill
+
+      - name: Verify zip contents
+        run: |
+          unzip -l /tmp/email-labeler.skill | grep -q 'email-labeler/SKILL.md'
+          unzip -l /tmp/email-labeler.skill | grep -q 'email-labeler/VERSION.md'

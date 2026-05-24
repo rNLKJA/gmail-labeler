@@ -1,0 +1,44 @@
+name: Feature request
+description: Suggest an improvement to the skill or tooling
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to do with your inbox?
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Which scope does this affect?
+      options:
+        - First-time / backfill
+        - Returning inbox triage
+        - Gmail filters / generator
+        - Provider rules schema
+        - Documentation only
+        - Scheduling / automation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How should the skill or scripts behave?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: tokens
+    attributes:
+      label: Token / cost impact
+      options:
+        - label: This should reduce tokens or API calls
+        - label: OK if it costs more tokens for better accuracy

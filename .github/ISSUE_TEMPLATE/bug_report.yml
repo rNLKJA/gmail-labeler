@@ -1,0 +1,60 @@
+name: Bug report
+description: Something broke or behaved unexpectedly
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste email content, OAuth secrets, or full `MEMORY.md` / `provider-rules.md`.
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Agent / runtime
+      options:
+        - Cursor
+        - Claude Code / Desktop
+        - Codex
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Run mode
+      options:
+        - First-time setup
+        - Returning (inbox only)
+        - Backfill / gap-fill
+        - Fix wrong labels
+        - Dry run only
+        - Filter generator / validator script
+        - Other
+  - type: input
+    id: version
+    attributes:
+      label: Skill version
+      description: From SKILL.md frontmatter or VERSION.md
+      placeholder: "1.2.0"
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: Scope, dry_run setting, prompt used, script command, etc.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error output (redact secrets)
+      description: MCP error, validate_rules.py output, or generator stderr

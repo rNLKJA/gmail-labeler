@@ -4,6 +4,42 @@ All notable changes to Gmail Labeler are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [SemVer](https://semver.org/).
 
+## [1.3.0] - 2026-05-24
+
+### Added
+
+- `references/run-modes.md` — mode matrix, parameters, fix-wrong-labels workflow
+- `references/token-efficiency.md` — domain dedupe, `max_threads`, filter backlog strategy
+- `config.yaml.example` — optional run defaults
+- `templates/taxonomy-au.md` and `templates/taxonomy-us.md` — optional regional packs
+- **Content type** column in provider rules schema (agent-side; filters ignore)
+- `## Payment processors` section in template (PayPal, Stripe examples)
+- **`max_threads`** parameter for dry-run and first-pass caps
+- Formal **fix-wrong-labels** mode in SKILL frontmatter `modes`
+
+### Changed
+
+- **Mandatory domain dedupe** on first-time setup and backfill
+- SKILL.md trimmed — long mode/token sections moved to references
+- Prompts updated with domain dedupe and `--log-summary`
+- README: regional packs, scheduling details, troubleshooting (extended)
+
+## [1.2.0] - 2026-05-24
+
+### Added
+
+- `scripts/validate_rules.py` — lint `provider-rules.md` tables
+- `tests/` — unittest coverage for generator and validator
+- `.github/workflows/ci.yml` — validate, test, build-skill smoke job
+- `CONTRIBUTING.md` and GitHub issue templates
+- `examples/minimal/provider-rules.minimal.md` — 10-brand quickstart
+- Generator `--log-summary` flag for LOG.md rule counts
+- README troubleshooting section
+
+### Changed
+
+- Run report and LOG template include filter rule count / re-import hint
+
 ## [1.1.1] - 2026-05-24
 
 ### Changed
@@ -43,6 +79,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning foll
 - Starter provider rules (~100 brands), example prompts, scheduling stubs
 - GPL-3.0 licence, README, Buy Me a Coffee / GitHub Sponsors
 
+[1.3.0]: https://github.com/rNLKJA/gmail-labeler/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/rNLKJA/gmail-labeler/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/rNLKJA/gmail-labeler/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/rNLKJA/gmail-labeler/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/rNLKJA/gmail-labeler/releases/tag/v1.0.0

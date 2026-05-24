@@ -14,6 +14,9 @@ children. See `SKILL.md` → "Master label taxonomy".
 - **Label** — full nested path. Create if missing.
 - **Default** — `keep` (leave in inbox) or `archive` (remove INBOX after labelling).
   Actual content wins over default (a real receipt is always `keep`).
+- **Content type** — optional agent-side hint: `receipt`, `marketing`, `security`,
+  `newsletter`, `account`, `other`. **Gmail filters ignore this column** (from-only
+  matching). The agent uses it when one domain sends mixed mail (PayPal, Apple, Stripe).
 - **Notes** — optional context.
 
 **Multi-type brands:** use multiple rows with different `Match` values — filters
@@ -51,13 +54,22 @@ match on **from** only, not subject. See `## Multi-type brands` below.
 | kraken.com | | Banking/Kraken | keep | crypto |
 | gemini.com | | Banking/Gemini | keep | crypto |
 | crypto.com | | Banking/Crypto.com | keep | crypto |
-| paypal.com | | Banking/PayPal | keep | payments |
 | wise.com | | Banking/Wise | keep |  |
-| stripe.com | | Banking/Stripe | keep | merchant receipts |
 | klarna.com | | Banking/Klarna | keep |  |
 | afterpay.com | | Banking/Afterpay | keep |  |
 | americanexpress.com | | Banking/Amex | keep |  |
 | capitalone.com | | Banking/Capital One | keep |  |
+
+## Payment processors (agent disambiguation)
+
+Filters match **from** only. Use **Content type** + subject/snippet to route
+merchant-specific receipts when everything arrives via one processor domain.
+
+| Domain | Match | Label | Default | Content type | Notes |
+|---|---|---|---|---|---|
+| paypal.com | | Banking/PayPal | keep | receipt | default PayPal receipts; merchant in subject |
+| stripe.com | | Banking/Stripe | keep | receipt | merchant name in subject |
+| stripe.com | billing@stripe.com | Subscriptions/Stripe | keep | account | Stripe billing for SaaS |
 
 ## Grocery & food delivery
 
@@ -183,16 +195,16 @@ match on **from** only, not subject. See `## Multi-type brands` below.
 One row per distinct **from** pattern. Agent triage uses subject/snippet; filters
 use `Match` only.
 
-| Domain | Match | Label | Default | Notes |
-|---|---|---|---|---|
-| apple.com | | Shopping/Apple | keep | Store orders, receipts |
-| apple.com | email.apple.com | Subscriptions/Apple | keep | iCloud/Apple One billing |
-| apple.com | insideapple.apple.com | News & Ads/Apple | archive | dev/marketing |
-| google.com | | Subscriptions/Google One | keep | One/Payment billing |
-| google.com | googlestore-noreply@google.com | Shopping/Google | keep | Play/Store purchases |
-| youtube.com | | Subscriptions/YouTube | keep | Premium membership billing |
-| youtube.com | noreply-purchases@youtube.com | Subscriptions/YouTube | keep | membership notices |
-| amazon.com | | Shopping/Amazon | keep | orders, shipping |
+| Domain | Match | Label | Default | Content type | Notes |
+|---|---|---|---|---|---|
+| apple.com | | Shopping/Apple | keep | receipt | Store orders, receipts |
+| apple.com | email.apple.com | Subscriptions/Apple | keep | account | iCloud/Apple One billing |
+| apple.com | insideapple.apple.com | News & Ads/Apple | archive | marketing | dev/marketing |
+| google.com | | Subscriptions/Google One | keep | account | One/Payment billing |
+| google.com | googlestore-noreply@google.com | Shopping/Google | keep | receipt | Play/Store purchases |
+| youtube.com | | Subscriptions/YouTube | keep | account | Premium membership billing |
+| youtube.com | noreply-purchases@youtube.com | Subscriptions/YouTube | keep | receipt | membership notices |
+| amazon.com | | Shopping/Amazon | keep | receipt | orders, shipping |
 
 ## Travel
 

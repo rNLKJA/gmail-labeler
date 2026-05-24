@@ -1,7 +1,12 @@
 ---
 name: email-labeler
-version: 1.1.1
+version: 1.3.0
 description: Triage and label Gmail by sender/provider so the inbox shows only what matters, and generate importable Gmail filter rules (sender → label) to auto-categorise future mail. Use this skill whenever the user wants to label, sort, file, organize, tidy, or "triage" their Gmail; clean up or clear the inbox; auto-file newsletters, marketing, receipts, or subscription mail by provider; find which senders have no label yet; or build email "rules"/filters that automatically categorise incoming email. Trigger on phrases like "label my email", "sort my inbox", "file my subscriptions", "who don't I have a label for", "archive the junk", "run my email triage", or "draft email rules to auto-categorise" — even when the user doesn't name a specific provider.
+modes:
+  - first-time-setup
+  - returning-run
+  - backfill-gap-fill
+  - fix-wrong-labels
 ---
 
 # Email Labeler
@@ -14,9 +19,11 @@ definition, the mail that actually needs a human.
 The guiding idea: **prefer the user's existing labels, file by provider, archive
 the low-value stuff, keep the records, and never silently lose anything.**
 
-**Two modes:** **First-time setup / backfill** labels mail within a **cutoff window**
-once and generates Gmail filters. **Returning runs** only triage **incoming inbox
-mail**. **Both modes skip threads where the expected label from
+**Four run modes:** **First-time setup**, **Returning run** (inbox only),
+**Backfill / gap-fill**, and **Fix wrong labels**. See `references/run-modes.md`
+for scope, parameters, and mode-specific workflows.
+
+**All modes skip threads where the expected label from
 `provider-rules.md` is already applied** — never re-label satisfied mail.
 
 ## What this skill does, in one breath
@@ -74,93 +81,30 @@ filed, skips). Nothing happens invisibly.
 
 ## First-time setup
 
-Use this workflow when the user has never run the skill, or wants to rebuild their
-sender→label map from scratch.
+Use when the user has never run the skill, or wants to rebuild their sender→label
+map. Full steps: `references/run-modes.md` § First-time setup.
 
-1. **Scan sender addresses across the cutoff window.** Build scope from
-   `lookback_days` (default **`90`** — three months): `newer_than:{N}d -in:sent
-   -in:chats -in:draft`. For gap-fill prefer
-   `has:nouserlabels newer_than:{N}d -in:sent -in:chats -in:draft` over a full
-   date scan when possible. Paginate through results.
-   - **Why 90 days default?** Most active senders appear in the last three months.
-     Shorter window = fewer threads read = lower token cost. Widen to `180` or
-     `365` only when the user explicitly asks for a longer history pass.
-2. **Build a 1:1 sender → label map.** For every distinct sender domain, map to
-   a provider label. Strip mail-vendor prefixes (`mail.`, `email.`, `e.`,
-   `info.`, `comms.`, `notify.`, `news.`, `updates.`, `txn.`) to find the real
-   brand. For multi-type brands use multiple rows with `Match` in
-   `provider-rules.md` (see template `## Multi-type brands`).
-3. **Create master category labels on demand.** Derive required masters from
-   planned `Parent/Provider` children — create each master only when the first
-   child under that parent is needed (plain name, no `/`). Skip masters the user
-   has customised in `MEMORY.md`. If `MEMORY.md` sets `create_all_masters: true`,
-   create all masters from the taxonomy table below upfront. Report created vs
-   already-present masters before creating child labels.
-4. **Categorise and create provider labels in bulk.** Group providers under the
-   right parent. Create missing child labels with `create_label` using the full
-   `Parent/Provider` display name. Add new master parents only when no existing
-   parent fits (record the decision in `MEMORY.md`). When applying labels within
-   the cutoff window, **skip threads that already carry the expected label** for
-   that sender and content type (see "Rule-satisfied skip").
-5. **Persist the map.** Write every domain → label → keep/archive decision to
-   `references/provider-rules.md`. This becomes the seed list for every later run.
-   Start from `references/provider-rules.template.md` if the file doesn't exist.
-6. **Generate Gmail filters.** Run `python scripts/generate_filters.py
-   references/provider-rules.md --output-dir <dir>` (see "Generating Gmail receive
-   rules"). After the user imports filters, **returning runs should not re-scan
-   historical mail** — only the inbox.
+**Mandatory domain dedupe:** paginate `search_threads`, collect **distinct sender
+domains**, classify each domain once, apply to all threads from that domain.
+Details: `references/token-efficiency.md` § Domain dedupe pass.
 
-Default to a **dry run** on first use: report the full sender→label plan (masters
-to create on demand, rule-satisfied skip count) and ask for confirmation before
-any Gmail mutations.
+Summary:
 
-## Returning runs (inbox only — never re-label)
+1. Scan senders in scope (`lookback_days`, default **90**).
+2. Domain dedupe → build `provider-rules.md` (start from template if missing).
+3. Create masters on demand; apply labels to gaps only (rule-satisfied skip).
+4. Run `python scripts/generate_filters.py … --log-summary`; user imports
+   `gmail-filters.xml`.
 
-Use this workflow after first-time setup (and after `gmail-filters.xml` is imported
-if possible). The goal is **incoming mail in the inbox**, not a repeat pass over
-mail that was already filed.
+Default **dry run** until user confirms. Optional **`config.yaml`** and
+**`max_threads`** cap — see `references/run-modes.md`.
 
-Every subsequent run follows this lookup order **before** touching any mail:
+## Returning runs (inbox only)
 
-1. Read `MEMORY.md` — account-specific precedents override general defaults.
-2. Read `references/email-policy.md` — category actions and safety rules.
-3. Read `references/provider-rules.md` — the sender-domain → label lookup table.
-4. Call `list_labels` and build the set of **provider label IDs** (all nested
-   `Parent/Provider` labels plus any label path listed in `provider-rules.md`).
-5. Call `search_threads` with the returning-run scope (default below). **Only**
-   process **inbox** threads that do **not** already satisfy their provider rule
-   (see "Rule-satisfied skip"). Reason from scratch only for senders the rules
-   table doesn't cover.
+After setup: **inbox-only** scope, rule-satisfied skip, no silent backfill.
+Inbox-zero accounts may show zero threads — normal when filters work.
 
-**Default scope:** `in:inbox -in:sent -in:chats -in:draft`
-
-Optional narrowing: `newer_than:7d in:inbox -in:sent -in:chats -in:draft` if the
-user wants a time window on top of inbox-only.
-
-**Never re-run on rule-satisfied mail:** once a thread carries the **expected**
-label for its sender and content type, **skip it entirely** — do not re-label,
-re-archive, re-read, or change keep/archive. Gmail filters handle most future mail
-automatically; the agent catches unlabeled inbox mail (new senders, filter gaps).
-
-**Explicit backfill only:** to label old mail or fix gaps (`has:nouserlabels`,
-`newer_than:{lookback_days}d`, a date range, or "re-scan my mailbox"), the user
-must ask for **backfill / gap-fill mode** — that is first-time-setup behaviour,
-not a returning run. Do not widen scope silently on scheduled or weekly runs.
-
-The user may override scope, but default to inbox-only unless they explicitly
-request backfill.
-
-## Inbox-zero mailboxes
-
-Some accounts run **inbox-zero**: filters pre-archive most mail, so `in:inbox`
-returns few or zero threads on returning runs. That is normal when filters work.
-
-- **Default:** keep `in:inbox` scope on returning runs. Zero threads processed is OK.
-- **Catch-up (explicit opt-in only):** when the user asks to find unlabeled mail
-  outside the inbox, use:
-  `has:nouserlabels newer_than:{catch_up_days}d -in:sent -in:chats -in:draft`
-  (default `catch_up_days: 7`). Still apply rule-satisfied skip.
-- Never widen to catch-up scope on scheduled runs unless the user configured it.
+Catch-up and backfill are **explicit opt-in** — see `references/run-modes.md`.
 
 ## Rule-satisfied skip (all runs)
 
@@ -251,67 +195,29 @@ rename/merge/recolour — those are manual steps for the user in Gmail. When a l
 needs moving, create the new one + re-file mail, and tell the user to delete the
 empty leftover and set colours themselves.
 
-## Parameters (ask or infer)
+## Parameters
 
-| Parameter | Default | Maps to | Used in |
-|---|---|---|---|
-| `lookback_days` | **`90`** (3 months) | `newer_than:{N}d` | First-time setup, backfill |
-| `catch_up_days` | `7` | `has:nouserlabels newer_than:{N}d` | Returning catch-up (opt-in) |
-| `dry_run` | `true` on first scope | — | All modes |
+Read `references/run-modes.md` for the full parameter table, scopes, dry-run
+rules, **fix-wrong-labels** mode, and optional `config.yaml`.
 
-- **Scope** — built from parameters above, or user override.
-  - **First-time setup / backfill:** `newer_than:{lookback_days}d -in:sent -in:chats
-    -in:draft`, or `has:nouserlabels …` for gap-fill.
-  - **Returning runs:** `in:inbox -in:sent -in:chats -in:draft`.
-  - **Catch-up (opt-in):** `has:nouserlabels newer_than:{catch_up_days}d -in:sent
-    -in:chats -in:draft`.
-  - Natural language: "last 3 months" → `lookback_days: 90`; "last 30 days" → `30`.
-- **Dry run** — when `dry_run: true`:
-  - **Allowed:** `search_threads`, `list_labels`, `get_thread` (read only).
-  - **Forbidden:** `create_label`, `label_thread`, `unlabel_thread` (no Gmail mutations).
-  - Report: proposed masters (on demand), labels to create, threads to file,
-    rule-satisfied skip count, keep/archive decisions.
-  - Default dry run on first use of a new scope; act after user confirms.
+| Parameter | Default | Notes |
+|---|---|---|
+| `lookback_days` | **90** | First-time, backfill, fix-wrong-labels |
+| `catch_up_days` | **7** | Opt-in catch-up |
+| `max_threads` | unlimited | Cap pagination; suggest **50** for dry runs |
+| `dry_run` | true on first scope | No Gmail mutations when true |
 
-## Token efficiency (best practices)
+## Token efficiency
 
-Every run should minimise tokens spent on mail the system already handles.
+Minimise tokens on every run. **Mandatory domain dedupe** on first-time and
+backfill. Default 90-day window, snippet-only reads, rule-satisfied skip, filters
+for bulk backlog.
 
-**Scope (biggest lever)**
-- Default **`lookback_days: 90`** — three months, not a full year.
-- **Returning runs:** `in:inbox` only; zero threads processed is OK when filters work.
-- **Backfill:** prefer `has:nouserlabels newer_than:{N}d` over scanning all mail in range.
-- Widen lookback only when the user explicitly asks (e.g. "go back 12 months").
-
-**Read less per thread**
-- Classify from **sender + subject + snippet** returned by `search_threads`. Do not
-  call `get_thread` unless genuinely ambiguous.
-- Do not open attachment contents (policy + token savings).
-
-**Skip work already done**
-- **Rule-satisfied skip** before any label/archive action.
-- After first setup, let **Gmail filters** (imported `gmail-filters.xml` with
-  "Apply to existing conversations") label historical backlog — the agent builds
-  the rule table and filters file; Gmail applies bulk labelling without the agent
-  re-reading every old thread.
-
-**Efficient first-time setup (recommended)**
-1. **Dry run:** paginate `search_threads`, collect **distinct sender domains** only,
-   build `provider-rules.md` + filter plan. Skip domains already rule-satisfied.
-2. **Confirm** with user.
-3. **Apply** labels only to **gaps** in scope (unlabeled threads), not every thread.
-4. **Generate + import filters** — filters clear most remaining backlog in one Gmail
-   import without another agent pass.
-
-**Reporting**
-- End with **aggregate counts**, not a per-email list (see report structure).
-
-**Persist rules**
-- Write decisions to `provider-rules.md` and `MEMORY.md` so later runs need less
-  reasoning from scratch.
+Full guide: `references/token-efficiency.md`
 
 ## Persistent files (read/write these every run)
 
+- `config.yaml` — optional run defaults (`config.yaml.example`). Prompt overrides file.
 - `MEMORY.md` — durable, account-specific decisions and precedents. **Read it
   first, every run.** It overrides general defaults when they conflict. Append a
   new precedent whenever you decide a novel case. Start from `MEMORY.template.md`
@@ -332,7 +238,8 @@ Every run should minimise tokens spent on mail the system already handles.
    "Master label taxonomy"). Respect `create_all_masters: true` in `MEMORY.md`.
 
 2. **Fetch mail in scope** with `search_threads`. Paginate via `pageToken` until
-   no more results. Process newest-first.
+   no more results or **`max_threads`** cap reached. Process newest-first.
+   On first-time/backfill: **domain dedupe** — classify each distinct domain once.
 
 3. **For each thread, identify the provider.** Use the sender address and display
    name first (the domain is the strongest signal — `dan@tldrnewsletter.com` →
@@ -416,9 +323,11 @@ Every run should minimise tokens spent on mail the system already handles.
 
 11. **Refresh the Gmail receive rules.** When `provider-rules.md` changed this run,
     run:
-    `python scripts/generate_filters.py references/provider-rules.md --output-dir <dir>`
-    and remind the user to **re-import** `gmail-filters.xml` in Gmail (Settings →
-    Filters → Import → Apply to existing conversations). Skip if no rule changes.
+    `python scripts/generate_filters.py references/provider-rules.md --output-dir <dir> --log-summary`
+    Append the `Rules: N | Output: …` line to `LOG.md`. Compare rule count to the
+    last generator entry — if changed, remind the user to **re-import**
+    `gmail-filters.xml` in Gmail (Settings → Filters → Import → Apply to existing
+    conversations). Skip if no rule changes.
 
 ## Generating Gmail receive rules (auto-categorisation)
 
@@ -426,11 +335,12 @@ Every run should minimise tokens spent on mail the system already handles.
 
 ```bash
 python scripts/generate_filters.py references/provider-rules.md --output-dir .
-python scripts/generate_filters.py references/provider-rules.md --dry-run
+python scripts/generate_filters.py references/provider-rules.md --dry-run --log-summary
+python scripts/validate_rules.py references/provider-rules.md
 ```
 
 The script reads markdown tables (`Domain`, optional `Match`, `Label`, `Default`,
-`Notes`) and emits:
+optional `Content type`, `Notes`) and emits:
 
 - **`gmail-filters.xml`** — importable Gmail filters. Each rule uses `from`
   (`Match` if set, else `Domain`), `label`, and `shouldArchive=true` when
@@ -471,8 +381,8 @@ End every run with a concise summary, not a per-email wall of text:
 
 **Kept in inbox (records):** <count>   **Archived (noise):** <count>
 
-**Filters changed:** re-import gmail-filters.xml in Gmail (Settings → Filters →
-Import → tick Apply to existing conversations). Omit this line if no rule changes.
+**Filters changed:** rules=<N>, path=<path>. Re-import gmail-filters.xml if N differs
+from last LOG.md generator entry. Omit if no rule changes.
 ```
 
 Then ask whether the new label placements look right. On returning runs, do **not**
