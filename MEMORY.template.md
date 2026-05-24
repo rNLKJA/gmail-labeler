@@ -16,7 +16,7 @@ Companion files:
 
 ## Standing decisions
 
-<!-- Precedents: label scope, parent categories, keep vs archive rules, multi-type brand splits. -->
+<!-- Precedents: label scope, parent categories, master label customisations, keep vs archive rules, multi-type brand splits. -->
 
 ## Connector limitations
 

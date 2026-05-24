@@ -3,6 +3,11 @@
 Starter table for new users. Copy to `references/provider-rules.md` and customise
 for your mailbox. The skill still creates labels on the fly for senders not listed.
 
+**Fresh start:** on first run the skill creates **master category labels** first
+(`Shopping`, `Subscriptions`, `News & Ads`, `Banking`, `Bills`, `Travel`,
+`Government`, `Health`, `Career`, `Education`, `Property`), then nested
+`Parent/Provider` children. See `SKILL.md` → "Master label taxonomy".
+
 **Schema:**
 - **Domain** — match sender after stripping `mail.`/`email.`/`e.`/`info.`/`comms.`
   `/notify.`/`news.`/`updates.`/`txn.` prefixes.

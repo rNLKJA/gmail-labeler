@@ -14,16 +14,20 @@ Steps:
 1. Read MEMORY.md (or MEMORY.template.md if missing), references/email-policy.md,
    and references/provider-rules.md (or provider-rules.template.md if missing).
 2. Scan all distinct sender domains in scope.
-3. Propose labels grouped by parent (Shopping, Subscriptions, News & Ads, Banking,
-   Bills, Travel, Government, Health, Career, Education, Property).
-4. Report the full plan — do NOT apply labels until I confirm.
-5. After confirmation, apply labels, persist to provider-rules.md, and generate
-   gmail-filters.xml + email-receive-rules.md.
+3. Ensure master category labels exist (Shopping, Subscriptions, News & Ads,
+   Banking, Bills, Travel, Government, Health, Career, Education, Property).
+   Create any missing masters before proposing child labels.
+4. Propose provider labels grouped by parent (e.g. Shopping/Amazon,
+   Subscriptions/Spotify).
+5. Report the full plan — do NOT apply labels until I confirm.
+6. After confirmation, create masters (if still missing), apply labels, persist to
+   provider-rules.md, and generate gmail-filters.xml + email-receive-rules.md.
 ```
 
 ## Expected output
 
 - Count of distinct senders found
+- Master labels to create (or already present)
 - Proposed label map grouped by parent category
 - Keep vs archive recommendation per provider
 - List of senders skipped (OTP, personal, ambiguous)

@@ -83,3 +83,15 @@ Examples:
 
 - User's **interest list** for offer curation (set during baseline setup).
 - Confirm any preferred **label names** and parent taxonomy.
+
+## Master label taxonomy
+
+Before creating nested `Parent/Provider` labels on a fresh mailbox, create these
+**master categories** as top-level labels (plain name, no `/`):
+
+`Shopping` · `Subscriptions` · `News & Ads` · `Banking` · `Bills` · `Travel` ·
+`Government` · `Health` · `Career` · `Education` · `Property`
+
+Grocery and food-delivery senders usually file under `Shopping/<Provider>`.
+Users may customise masters in `MEMORY.md`; the skill reads that before creating
+labels.

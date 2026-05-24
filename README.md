@@ -26,7 +26,7 @@ Gmail Labeler is an agent skill for [Cursor](https://cursor.com), [Claude](https
 
 The skill runs through a Gmail MCP connector. Your agent reads sender addresses, subjects, and snippets, matches them to a label taxonomy you control, and applies labels in bulk. Receipts and account records stay visible. Marketing and digests get labelled and archived so they remain searchable without cluttering the inbox. Nothing is deleted. Attachment filenames can be used for context; attachment contents are never opened.
 
-On the first run, the skill scans up to twelve months of mail, builds a one-to-one sender-to-label map, creates any missing labels, and generates an importable `gmail-filters.xml` file. After that, a weekly seven-day sweep catches new senders while existing rules handle the rest. Your personal rules live in local files (`MEMORY.md`, `provider-rules.md`, `LOG.md`) that never leave your machine.
+On the first run, the skill scans up to twelve months of mail, **creates master category labels** (Shopping, Subscriptions, Banking, and so on) so nested provider labels sit under a clean sidebar tree, builds a one-to-one sender-to-label map, creates any missing child labels, and generates an importable `gmail-filters.xml` file. After that, a weekly seven-day sweep catches new senders while existing rules handle the rest. Your personal rules live in local files (`MEMORY.md`, `provider-rules.md`, `LOG.md`) that never leave your machine.
 
 ## Who this is for
 
@@ -99,7 +99,7 @@ flowchart TD
   Label --> Inbox
 ```
 
-**First-time setup** scans the last year of mail, builds a one-to-one sender-to-label map, creates labels, and generates importable Gmail filters. **Returning runs** read your saved rules and only reason from scratch for new senders, usually as a weekly seven-day sweep.
+**First-time setup** scans the last year of mail, **ensures master category labels exist**, builds a one-to-one sender-to-label map, creates nested provider labels, and generates importable Gmail filters. **Returning runs** read your saved rules and only reason from scratch for new senders, usually as a weekly seven-day sweep.
 
 ## Core behaviour
 

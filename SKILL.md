@@ -82,19 +82,55 @@ sender→label map from scratch.
    a provider label. Strip mail-vendor prefixes (`mail.`, `email.`, `e.`,
    `info.`, `comms.`, `notify.`, `news.`, `updates.`, `txn.`) to find the real
    brand.
-3. **Categorise and create labels in bulk.** Group providers under the right
-   parent (Shopping, Subscriptions, News & Ads, Banking, Bills, Travel,
-   Government, Health, Career, Education, Property — create new parents when
-   needed). Create any missing labels with `create_label`.
-4. **Persist the map.** Write every domain → label → keep/archive decision to
+3. **Create master category labels first.** Call `list_labels`, then `create_label`
+   for each missing master from the taxonomy table below (plain name, no `/`).
+   Skip masters the user has customised in `MEMORY.md`. Report created vs
+   already-present masters before creating any `Parent/Provider` child labels.
+4. **Categorise and create provider labels in bulk.** Group providers under the
+   right parent. Create missing child labels with `create_label` using the full
+   `Parent/Provider` display name. Add new master parents only when no existing
+   parent fits (record the decision in `MEMORY.md`).
+5. **Persist the map.** Write every domain → label → keep/archive decision to
    `references/provider-rules.md`. This becomes the seed list for every later run.
    Start from `references/provider-rules.template.md` if the file doesn't exist.
-5. **Generate Gmail filters.** Produce `gmail-filters.xml` and
+6. **Generate Gmail filters.** Produce `gmail-filters.xml` and
    `email-receive-rules.md` so future mail auto-categorises without another scan
    (see "Generating Gmail receive rules" below).
 
-Default to a **dry run** on first use: report the full sender→label plan and ask
-for confirmation before applying labels.
+Default to a **dry run** on first use: report the full sender→label plan (including
+which master labels would be created) and ask for confirmation before applying
+labels.
+
+## Master label taxonomy
+
+On a **fresh start** the user often has no nested labels yet. Before creating any
+`Parent/Provider` label, ensure these **master categories** exist as top-level
+labels (one `create_label` call each, no slash in the name):
+
+| Master label | Typical children |
+|---|---|
+| `Shopping` | `Shopping/Amazon`, `Shopping/eBay` |
+| `Subscriptions` | `Subscriptions/Spotify`, `Subscriptions/Notion` |
+| `News & Ads` | `News & Ads/TLDR`, `News & Ads/Apple` |
+| `Banking` | `Banking/PayPal`, `Banking/Chase` |
+| `Bills` | `Bills/Origin`, `Bills/Telstra` |
+| `Travel` | `Travel/Qantas`, `Travel/Uber` |
+| `Government` | `Government/ATO`, `Government/USCIS` |
+| `Health` | `Health/Bupa`, `Health/Medicare` |
+| `Career` | `Career/LinkedIn`, `Career/Indeed` |
+| `Education` | `Education/Coursera`, `Education/MIT` |
+| `Property` | `Property/Domain`, `Property/Realestate.com.au` |
+
+**Why masters first:** child-only creation can leave the sidebar looking flat or
+out of order. Masters give a collapsible tree before provider labels are added.
+
+**Every run:** after `list_labels`, if you need to create `Parent/Child` and
+`Parent` is missing, create the master first, refresh the label map, then create
+the child.
+
+Users may rename or extend masters in `MEMORY.md` (e.g. regional groupings). Read
+`MEMORY.md` before creating masters; never duplicate a master the user already
+uses under a different name.
 
 ## Returning runs
 
@@ -127,8 +163,10 @@ connection-specific hash, so identify them by capability:
 - **unlabel_thread** — remove label(s) from a thread. **Archiving = removing the
   `INBOX` label.** There is no separate "archive" tool.
 - **create_label** — create a new label. Gmail treats `/` in the display name as
-  nesting, so creating `Shopping/Amazon` files it under the existing `Shopping`
-  parent automatically.
+  nesting (`Shopping/Amazon` nests under `Shopping`). On a **fresh mailbox**, Gmail
+  may infer a parent when you create a nested name, but the sidebar stays flat and
+  messy until the master categories exist. **Always create master labels first**
+  (see "Master label taxonomy" below), then create `Parent/Provider` children.
 
 There is no "send" capability and labels are applied at the thread level.
 
@@ -168,7 +206,9 @@ empty leftover and set colours themselves.
 
 1. **Load memory, policy, rules, and labels.** Read `MEMORY.md`,
    `references/email-policy.md`, and `references/provider-rules.md`. Call
-   `list_labels` and build a map of full display name → label ID.
+   `list_labels` and build a map of full display name → label ID. On first-time
+   setup (or when the map has no user nested labels yet), create missing **master
+   category** labels before processing mail (see "Master label taxonomy").
 
 2. **Fetch mail in scope** with `search_threads`. Paginate via `pageToken` until
    no more results. Process newest-first.
@@ -231,8 +271,9 @@ empty leftover and set colours themselves.
        → `Shopping/YouTube`, a YouTube *membership* → `Subscriptions/YouTube`;
        an Apple Store *order* → `Shopping/Apple`, Apple *marketing* →
        `News & Ads/Apple`.
-   - Create with `create_label` using the full `Parent/Provider` display name so
-     it nests correctly.
+   - **Ensure the master parent exists** (create `Parent` alone if missing), then
+     create the child with `create_label` using the full `Parent/Provider` display
+     name so it nests correctly.
    - Treat every created label as provisional: list it in the report so the user
      can rename or move it.
 
@@ -287,6 +328,8 @@ End every run with a concise summary, not a per-email wall of text:
 - <Provider> → <Label>  (×<n>)  [kept | archived]
 - ...
 
+**Master labels ensured:** <list — created vs already existed>
+
 **New labels created:** <count>
 - <Parent/Provider>  — created for <Provider>, applied to <n> thread(s)
 - ...
@@ -313,8 +356,9 @@ Action: label `Subscriptions/Spotify` (exists). Marketing → archive (remove IN
 
 **Example 3 — unlabeled provider, create + report**
 Input: from `invoice+statements@mail.anthropic.com`, subject "Your receipt from Anthropic…"
-Action: no Anthropic label exists → create `Subscriptions/Anthropic`, apply it.
-Receipt → keep in inbox. Report the new label.
+Action: no Anthropic label exists → ensure master `Subscriptions` exists (create if
+missing), then create `Subscriptions/Anthropic`, apply it. Receipt → keep in inbox.
+Report both master and child if newly created.
 
 **Example 4 — gap fill (label exists but filter missed it)**
 Input: from `noreply-purchases@youtube.com`, subject "Your Premium membership will end…"
