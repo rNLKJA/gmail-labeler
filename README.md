@@ -1,4 +1,10 @@
-# Gmail Labeler
+<p align="left">
+  <a href="https://buymeacoffee.com/rnlkja"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-rnlkja-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me a Coffee"></a>
+  <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-blue?style=for-the-badge" alt="License: GPL v3"></a>
+</p>
+
+
+<h1 align='center'>Gmail Labeler</h1>
 
 Triage your Gmail by provider, with importable filters.
 
@@ -12,12 +18,6 @@ Triage your Gmail by provider, with importable filters.
   </a>
 </p>
 
-<p align="center">
-  <a href="https://buymeacoffee.com/rnlkja"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-rnlkja-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me a Coffee"></a>
-  <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-blue?style=for-the-badge" alt="License: GPL v3"></a>
-</p>
-
-> **Sponsor on GitHub:** use the **Sponsor** button (heart icon) on the repo homepage — it links to [buymeacoffee.com/rnlkja](https://buymeacoffee.com/rnlkja) via [`.github/FUNDING.yml`](.github/FUNDING.yml).
 
 ## How it works
 
@@ -134,8 +134,11 @@ collapses to the handful of things that actually need you.
 
 ## Prerequisites
 
-- **Cursor** or **Claude** (Code / Desktop) with a Gmail MCP connector
-- The connector must support: `search_threads`, `list_labels`, `label_thread`,
+- An AI agent that loads **skills** and connects to **Gmail via MCP**:
+  - **Cursor**
+  - **Claude** (Code / Desktop)
+  - **Codex** (OpenAI CLI / agent)
+- The Gmail connector must support: `search_threads`, `list_labels`, `label_thread`,
   `unlabel_thread`, `create_label` (see `SKILL.md` for details)
 
 ## Installation
@@ -151,6 +154,24 @@ git clone https://github.com/rNLKJA/gmail-labeler.git ~/.cursor/skills/gmail-lab
 ```bash
 git clone https://github.com/rNLKJA/gmail-labeler.git ~/.claude/skills/gmail-labeler
 ```
+
+### Codex (OpenAI CLI)
+
+User-wide (available in every project):
+
+```bash
+git clone https://github.com/rNLKJA/gmail-labeler.git ~/.codex/skills/gmail-labeler
+```
+
+Or project-scoped (commit into your repo for the team):
+
+```bash
+git clone https://github.com/rNLKJA/gmail-labeler.git .codex/skills/gmail-labeler
+```
+
+Restart Codex after installing so it picks up the new skill. You can also install
+via the built-in skill-installer: *"Install the skill from
+github.com/rNLKJA/gmail-labeler"*.
 
 ### Standalone
 
@@ -206,7 +227,7 @@ Three options — pick one:
 | GitHub Actions | `examples/scheduling/github-actions/weekly-triage.yml` | Sundays 09:00 UTC (advanced) |
 
 Each file notes the assumptions it makes (CLI binary, env vars, MCP endpoint).
-You need a working agent CLI (`cursor-agent`, `claude`, or equivalent) on PATH.
+You need a working agent CLI (`cursor-agent`, `claude`, `codex`, or equivalent) on PATH.
 
 ## Files
 
