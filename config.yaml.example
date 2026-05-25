@@ -5,4 +5,6 @@ lookback_days: 90
 catch_up_days: 7
 max_threads: 50          # cap threads per pass; omit or null for unlimited
 dry_run: false
-create_all_masters: false
+# First-time Step 1: false = full taxonomy masters (default on first run)
+# true = same as default; set false only when MEMORY.md lists specific masters
+create_all_masters: true

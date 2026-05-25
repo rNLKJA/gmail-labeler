@@ -10,10 +10,11 @@ max_threads: 50
 Scope: newer_than:30d -in:sent -in:chats -in:draft
 Dry run: true
 
-Use domain dedupe: classify distinct domains, then report the labelling plan.
-Do NOT call create_label, label_thread, or unlabel_thread.
-Show: proposed masters (on demand), labels, keep/archive decisions, rule-satisfied
-skips, and anything that would be skipped for review.
+For first-time setup, follow references/initial-setup-checklist.md:
+Step 1 masters before Step 2 analysis. Report Steps 1, 3, 4 separately.
+Do NOT call create_label, label_thread, or unlabel_thread until confirmed.
+Show: checklist status, keep/archive decisions, rule-satisfied skips, and items
+for review.
 ```
 
 For **returning runs**, use `in:inbox` scope. For **backfill**, use

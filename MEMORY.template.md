@@ -16,7 +16,7 @@ Companion files:
 
 ## Standing decisions
 
-<!-- Precedents: label scope, parent categories, create_all_masters (optional), inbox-only returning runs (never re-label), keep vs archive rules, multi-type brand splits. -->
+<!-- Precedents: label scope, parent categories, create_all_masters (optional; Step 1 masters), inbox-only returning runs (never re-label), keep vs archive rules, multi-type brand splits. -->
 
 ## Connector limitations
 

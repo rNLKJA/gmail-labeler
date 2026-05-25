@@ -4,6 +4,19 @@ All notable changes to Gmail Labeler are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/). Versioning follows [SemVer](https://semver.org/).
 
+## [1.3.1] - 2026-05-25
+
+### Added
+
+- `references/initial-setup-checklist.md` — first-time setup checklist (masters before analysis)
+- Initial setup checklist table in README and dry-run report format in checklist doc
+
+### Changed
+
+- **First-time setup order:** Step 1 create all master categories **before** Step 2 mail analysis; then provider children, then apply
+- `examples/prompts/first-time-setup.md` and `dry-run.md` use checklist step numbers
+- `config.yaml.example` — `create_all_masters: true` default for Step 1 full taxonomy
+
 ## [1.3.0] - 2026-05-24
 
 ### Added

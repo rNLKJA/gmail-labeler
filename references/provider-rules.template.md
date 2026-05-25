@@ -3,9 +3,9 @@
 Starter table for new users. Copy to `references/provider-rules.md` and customise
 for your mailbox. The skill still creates labels on the fly for senders not listed.
 
-**Fresh start:** on first run the skill creates **master category labels on demand**
-(when the first child under a parent is needed), then nested `Parent/Provider`
-children. See `SKILL.md` → "Master label taxonomy".
+**Fresh start:** follow `references/initial-setup-checklist.md` — **Step 1 master
+categories first**, Step 2 analyse mail, Step 3 provider children, Step 4 apply.
+Never create nested labels before masters.
 
 **Schema:**
 - **Domain** — canonical brand domain (for lookup and documentation).

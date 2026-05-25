@@ -16,17 +16,27 @@ All modes apply **rule-satisfied skip** unless fix-wrong-labels explicitly hunts
 
 ## First-time setup
 
-1. **Domain dedupe pass (mandatory):** paginate `search_threads`, collect **distinct
-   sender domains** only. Classify each domain once, then apply decisions to all
-   threads from that domain. See `references/token-efficiency.md`.
-2. Build 1:1 domain → label map; strip mail-vendor prefixes (`mail.`, `email.`, etc.).
-3. Create master labels **on demand** (first child under a parent).
-4. Apply labels to **gaps** only; skip rule-satisfied threads.
-5. Persist to `references/provider-rules.md`.
-6. Run `python scripts/generate_filters.py … --log-summary` and remind user to
-   re-import `gmail-filters.xml`.
+Follow `references/initial-setup-checklist.md`. Order is fixed — **masters before
+analysis**.
 
-Default **`lookback_days: 90`**. Default **`dry_run: true`** until user confirms.
+1. **Step 0 — Load:** `MEMORY.md`, `references/email-policy.md`,
+   `references/provider-rules.md` (or templates), `list_labels`.
+2. **Step 1 — Create master categories (always first):** all taxonomy masters by
+   default (see checklist § Step 1). Refresh `list_labels`. **No mail scan yet.**
+3. **Step 2 — Analyse mail:** domain dedupe pass — paginate `search_threads`,
+   classify each distinct sender domain, build sender→label plan. Read only.
+4. **Step 3 — Create provider children:** all planned `Parent/Provider` labels in
+   one batch; refresh `list_labels`.
+5. **Step 4 — Apply labels** to **gaps** only; skip rule-satisfied threads.
+6. **Steps 5–6 — Persist** to `references/provider-rules.md`; run
+   `python scripts/generate_filters.py … --log-summary`; remind user to re-import
+   `gmail-filters.xml`.
+
+Never create a nested child before its master exists; never interleave
+`create_label` with `label_thread`.
+
+Default **`lookback_days: 90`**. Default **`dry_run: true`** until user confirms
+Steps 1, 3, and 4 live.
 
 ## Returning runs (inbox only)
 

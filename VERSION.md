@@ -1,6 +1,6 @@
 # Version & feature matrix
 
-**Current version:** 1.3.0
+**Current version:** 1.3.1
 
 See [CHANGELOG.md](CHANGELOG.md) for release notes.
 
@@ -10,7 +10,9 @@ See [CHANGELOG.md](CHANGELOG.md) for release notes.
 |---|---|---|---|
 | First-time cutoff labelling | 1.0.0 | shipped | Default `lookback_days: 90` (from 1.1.1) |
 | Token efficiency guide | 1.1.1 | shipped | `references/token-efficiency.md` (from 1.3.0) |
-| Master label taxonomy | 1.0.0 | shipped | On-demand from 1.1.0 |
+| Master label taxonomy | 1.0.0 | shipped | Master-first from 1.3.1 |
+| Initial setup checklist | 1.3.1 | shipped | `references/initial-setup-checklist.md` |
+| Master-first first-time setup | 1.3.1 | shipped | Masters before mail analysis |
 | Rule-satisfied skip | 1.0.0 | shipped | Skip when expected label applied |
 | Inbox-only returning runs | 1.0.0 | shipped | Default `in:inbox` scope |
 | Filter generator script | 1.1.0 | shipped | `scripts/generate_filters.py` |
@@ -18,7 +20,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release notes.
 | Strict dry-run | 1.1.0 | shipped | No Gmail mutations when dry |
 | Inbox-zero catch-up docs | 1.1.0 | shipped | Opt-in `has:nouserlabels` |
 | Multi-type filter Match column | 1.1.0 | shipped | `provider-rules.template.md` |
-| Masters on demand | 1.1.0 | shipped | Optional `create_all_masters` |
+| Optional `create_all_masters` | 1.1.0 | shipped | Step 1 taxonomy toggle |
 | Wrong-label remediation prompt | 1.1.0 | shipped | `fix-wrong-labels.md` |
 | MCP setup guide | 1.1.0 | shipped | README |
 | Filter re-import reminder | 1.1.0 | shipped | Run report |

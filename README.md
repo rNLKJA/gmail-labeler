@@ -80,7 +80,13 @@ Gmail Labeler is an agent skill for [Cursor](https://cursor.com), [Claude](https
 
 The skill runs through a Gmail MCP connector. Your agent reads sender addresses, subjects, and snippets, matches them to a label taxonomy you control, and applies labels in bulk. Receipts and account records stay visible. Marketing and digests get labelled and archived so they remain searchable without cluttering the inbox. Nothing is deleted. Attachment filenames can be used for context; attachment contents are never opened.
 
-On the first run, the skill scans the **last three months** of mail (default `lookback_days: 90`), **creates master category labels** on demand, builds a sender-to-label map, generates `gmail-filters.xml`, and **skips mail that already satisfies the rule**. Import filters once to label older backlog without the agent re-reading every thread. **Returning runs** triage **inbox only**. Your personal rules live in local files (`MEMORY.md`, `provider-rules.md`, `LOG.md`) that never leave your machine.
+On the first run, the skill follows the **Initial Setup Checklist**
+(`references/initial-setup-checklist.md`): **master categories first**, then mail
+analysis, then provider children, then apply. Default `lookback_days: 90`. Generates
+`gmail-filters.xml` and skips mail that already satisfies the rule. Import filters
+once to label older backlog without the agent re-reading every thread. **Returning
+runs** triage **inbox only**. Personal rules live in local files (`MEMORY.md`,
+`provider-rules.md`, `LOG.md`) that never leave your machine.
 
 ## Who this is for
 
@@ -152,7 +158,10 @@ flowchart TD
   FiltersOut -->|import once| GmailImport[Gmail filters]
 ```
 
-**First-time setup** scans mail within `lookback_days` (default **90** — three months), creates master labels **on demand**, builds a sender-to-label map, and runs `scripts/generate_filters.py`. Import filters to handle older mail without a long agent scan. **Returning runs** process **inbox only** with rule-satisfied skip. See [VERSION.md](VERSION.md).
+**First-time setup** follows `references/initial-setup-checklist.md`: **Step 1
+masters → Step 2 analyse mail → Step 3 provider children → Step 4 apply**. Default
+**90-day** lookback. Import filters to handle older mail without a long agent scan.
+**Returning runs** process **inbox only** with rule-satisfied skip. See [VERSION.md](VERSION.md).
 
 ## Core behaviour
 
@@ -286,6 +295,23 @@ cp LOG.template.md LOG.md
 cp references/provider-rules.template.md references/provider-rules.md
 ```
 
+## Initial setup checklist
+
+First-time setup **always** follows this order (full detail in
+`references/initial-setup-checklist.md`):
+
+| Step | Action |
+|---|---|
+| 0 | Load `MEMORY.md`, policy, rules; `list_labels` |
+| 1 | **Create master categories** (all taxonomy masters by default) |
+| 2 | **Analyse mail** — domain dedupe, classify senders, build label plan |
+| 3 | **Create provider children** (`Shopping/Amazon`, etc.) |
+| 4 | **Apply labels** + archive noise; keep records in inbox |
+| 5–6 | Save rules, generate and import `gmail-filters.xml` |
+
+Masters exist **before** any mail analysis. Never create nested labels before their
+master parent.
+
 ### Rebuild install package (optional)
 
 After pulling updates:
@@ -334,16 +360,18 @@ Paste this into your agent:
 
 ```text
 Run the gmail-labeler skill in first-time setup mode.
+Follow references/initial-setup-checklist.md in order (masters before analysis).
 lookback_days: 90
 Scope: newer_than:90d -in:sent -in:chats -in:draft
 Dry run: true
-Goal: build my sender→label map (distinct domains first), report, then apply gaps + filters.
+Goal: Step 1 masters, Step 2 analyse, report Steps 3–4 before applying.
 ```
 
-Expected output: distinct senders, masters on demand, rule-satisfied skip count,
-confirmation before any Gmail mutations.
+Expected output: checklist status per step, distinct domains, masters (Step 1),
+provider children (Step 3), rule-satisfied skip count, confirmation before Gmail
+mutations.
 
-See also: `examples/prompts/first-time-setup.md`
+See also: `examples/prompts/first-time-setup.md`, `references/initial-setup-checklist.md`
 
 ## Usage — recurring runs
 
@@ -405,7 +433,7 @@ They are examples only — not loaded automatically.
 
 | File | Purpose |
 |---|---|
-| `SKILL.md` | The method — read first by the agent (v1.3.0) |
+| `SKILL.md` | The method — read first by the agent (v1.3.1) |
 | `README.md` | This file |
 | `VERSION.md` | Feature matrix and current version |
 | `CHANGELOG.md` | Release history |
@@ -415,6 +443,7 @@ They are examples only — not loaded automatically.
 | `scripts/validate_rules.py` | Lint provider rules before generation |
 | `scripts/build-skill.sh` | Rebuild `email-labeler.skill` zip |
 | `references/run-modes.md` | Run modes, parameters, fix-wrong-labels |
+| `references/initial-setup-checklist.md` | First-time setup checklist (masters before analysis) |
 | `references/token-efficiency.md` | Domain dedupe, max_threads, filter strategy |
 | `references/email-policy.md` | Category actions and safety rules |
 | `references/provider-rules.template.md` | Starter sender→label table (~200 rules) |
