@@ -1,11 +1,12 @@
 # MEMORY — email-labeler decisions & precedents
 
-This file is the durable memory for how *this specific Gmail account* should be
+This file is the durable memory for how _this specific Gmail account_ should be
 triaged. `SKILL.md` holds the general method; this file records the concrete
 choices made for your mailbox so future runs stay consistent. Read it at the
 start of every run. Append new precedents whenever a novel case is decided.
 
 Companion files:
+
 - `references/email-policy.md` — category actions and safety rules.
 - `references/provider-rules.md` — the sender-domain → label lookup table.
 - `LOG.md` — dated record of what each run actually did.

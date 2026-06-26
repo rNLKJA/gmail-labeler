@@ -81,7 +81,9 @@ def parse_provider_rules(path: Path) -> list[dict[str, str]]:
     return rules
 
 
-def build_xml(rules: list[dict[str, str]], title: str = "Mail Filters — Gmail Labeler") -> str:
+def build_xml(
+    rules: list[dict[str, str]], title: str = "Mail Filters — Gmail Labeler"
+) -> str:
     updated = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     parts = [
         '<?xml version="1.0" encoding="UTF-8"?>',
@@ -155,7 +157,9 @@ the updated XML.
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate Gmail filter files from provider-rules.md")
+    parser = argparse.ArgumentParser(
+        description="Generate Gmail filter files from provider-rules.md"
+    )
     parser.add_argument(
         "rules",
         nargs="?",
@@ -174,7 +178,9 @@ def main() -> int:
         action="store_true",
         help="Print one-line summary for LOG.md (rules count and output path)",
     )
-    parser.add_argument("--title", default="Mail Filters — Gmail Labeler", help="XML feed title")
+    parser.add_argument(
+        "--title", default="Mail Filters — Gmail Labeler", help="XML feed title"
+    )
     args = parser.parse_args()
 
     rules_path = Path(args.rules)
@@ -189,7 +195,9 @@ def main() -> int:
 
     archive_n = sum(1 for r in rules if r["archive"])
     keep_n = len(rules) - archive_n
-    print(f"Parsed {len(rules)} rules ({archive_n} archive, {keep_n} keep) from {rules_path}")
+    print(
+        f"Parsed {len(rules)} rules ({archive_n} archive, {keep_n} keep) from {rules_path}"
+    )
 
     out_dir = Path(args.output_dir)
     xml_path = out_dir / "gmail-filters.xml"

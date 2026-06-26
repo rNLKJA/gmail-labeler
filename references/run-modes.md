@@ -5,12 +5,12 @@ Prompt frontmatter and `config.yaml` override these defaults.
 
 ## Run modes
 
-| Mode | When | Default scope |
-|---|---|---|
-| **First-time setup** | Never run before, or rebuild sender map | `newer_than:{lookback_days}d -in:sent -in:chats -in:draft` |
-| **Returning run** | After setup + filter import | `in:inbox -in:sent -in:chats -in:draft` |
+| Mode                    | When                                                | Default scope                                              |
+| ----------------------- | --------------------------------------------------- | ---------------------------------------------------------- |
+| **First-time setup**    | Never run before, or rebuild sender map             | `newer_than:{lookback_days}d -in:sent -in:chats -in:draft` |
+| **Returning run**       | After setup + filter import                         | `in:inbox -in:sent -in:chats -in:draft`                    |
 | **Backfill / gap-fill** | User explicitly asks to label old or unlabeled mail | `has:nouserlabels newer_than:{lookback_days}d …` preferred |
-| **Fix wrong labels** | Mail has a provider label but not the expected one | `newer_than:{lookback_days}d …` or label-scoped search |
+| **Fix wrong labels**    | Mail has a provider label but not the expected one  | `newer_than:{lookback_days}d …` or label-scoped search     |
 
 All modes apply **rule-satisfied skip** unless fix-wrong-labels explicitly hunts mismatches.
 
@@ -71,12 +71,12 @@ from `provider-rules.md` + content classification.
 
 Parameters:
 
-| Parameter | Required | Notes |
-|---|---|---|
-| `wrong_label` | optional | Narrow search to threads with this label |
-| `correct_label` | optional | Target label after reclassification |
-| `lookback_days` | default 30 | Search window |
-| `dry_run` | default true | Report before `unlabel_thread` / `label_thread` |
+| Parameter       | Required     | Notes                                           |
+| --------------- | ------------ | ----------------------------------------------- |
+| `wrong_label`   | optional     | Narrow search to threads with this label        |
+| `correct_label` | optional     | Target label after reclassification             |
+| `lookback_days` | default 30   | Search window                                   |
+| `dry_run`       | default true | Report before `unlabel_thread` / `label_thread` |
 
 Workflow:
 
@@ -90,12 +90,12 @@ See `examples/prompts/fix-wrong-labels.md`.
 
 ## Parameters
 
-| Parameter | Default | Maps to | Used in |
-|---|---|---|---|
-| `lookback_days` | **90** | `newer_than:{N}d` | First-time, backfill, fix-wrong-labels |
-| `catch_up_days` | **7** | `has:nouserlabels newer_than:{N}d` | Catch-up (opt-in) |
-| `max_threads` | unlimited | Stop pagination after N threads | Dry run, first pass |
-| `dry_run` | true on first scope | — | All modes |
+| Parameter       | Default             | Maps to                            | Used in                                |
+| --------------- | ------------------- | ---------------------------------- | -------------------------------------- |
+| `lookback_days` | **90**              | `newer_than:{N}d`                  | First-time, backfill, fix-wrong-labels |
+| `catch_up_days` | **7**               | `has:nouserlabels newer_than:{N}d` | Catch-up (opt-in)                      |
+| `max_threads`   | unlimited           | Stop pagination after N threads    | Dry run, first pass                    |
+| `dry_run`       | true on first scope | —                                  | All modes                              |
 
 **Scope overrides:** natural language maps to parameters — "last 3 months" → `lookback_days: 90`.
 

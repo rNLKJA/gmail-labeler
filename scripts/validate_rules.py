@@ -11,7 +11,11 @@ from pathlib import Path
 # Allow importing sibling script when run as `python scripts/validate_rules.py`
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from generate_filters import SKIP_SECTION, normalise_rule, parse_table_rows  # noqa: E402
+from generate_filters import (  # noqa: E402
+    SKIP_SECTION,
+    normalise_rule,
+    parse_table_rows,
+)
 
 VALID_DEFAULTS = frozenset({"keep", "archive"})
 VALID_CONTENT_TYPES = frozenset(
@@ -76,7 +80,9 @@ def validate_rules(path: Path) -> ValidationResult:
     rule_count = 0
 
     for section, rows, start_line in tables:
-        in_multi_type = section is not None and MULTI_TYPE_SECTION.match(f"## {section}")
+        in_multi_type = section is not None and MULTI_TYPE_SECTION.match(
+            f"## {section}"
+        )
         domain_counts: dict[str, int] = {}
 
         for offset, row in enumerate(rows):
@@ -85,7 +91,9 @@ def validate_rules(path: Path) -> ValidationResult:
             match = row.get("Match", "").strip()
             label = row.get("Label", "").strip()
             default = row.get("Default", "keep").strip().lower()
-            content_type = row.get("Content type", row.get("content_type", "")).strip().lower()
+            content_type = (
+                row.get("Content type", row.get("content_type", "")).strip().lower()
+            )
 
             if domain.startswith("---") or label.startswith("---"):
                 continue

@@ -5,13 +5,13 @@ personal mailbox data stays in git-ignored files on your machine.
 
 ## What to edit where
 
-| Change | Edit in repo | Do not commit |
-|---|---|---|
-| Skill workflow, defaults | `SKILL.md`, `references/` | — |
+| Change                      | Edit in repo                            | Do not commit                       |
+| --------------------------- | --------------------------------------- | ----------------------------------- |
+| Skill workflow, defaults    | `SKILL.md`, `references/`               | —                                   |
 | Starter rules for new users | `references/provider-rules.template.md` | Your `references/provider-rules.md` |
-| Generator / validator | `scripts/` | Generated `gmail-filters.xml` |
-| Your taxonomy / precedents | — | `MEMORY.md` |
-| Run history | — | `LOG.md` |
+| Generator / validator       | `scripts/`                              | Generated `gmail-filters.xml`       |
+| Your taxonomy / precedents  | —                                       | `MEMORY.md`                         |
+| Run history                 | —                                       | `LOG.md`                            |
 
 ## Local checks before a PR
 

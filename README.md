@@ -3,7 +3,6 @@
   <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-blue?style=for-the-badge" alt="License: GPL v3"></a>
 </p>
 
-
 <h1 align='center'>Gmail Labeler</h1>
 
 <p align="center"><strong>Triage your Gmail by provider, with importable filters.</strong></p>
@@ -101,17 +100,17 @@ If you only receive a handful of emails per week and never use labels, manual Gm
 
 ## What you get out of the box
 
-| Deliverable | What it does |
-|---|---|
-| `SKILL.md` | Step-by-step method the agent follows on every run |
-| `references/provider-rules.template.md` | Starter sender-to-label table across banking, grocery, subscriptions, travel, bills, and more |
-| `references/email-policy.md` | Category actions (keep, archive, notify, skip) and safety rules |
-| `examples/prompts/` | Copy-paste prompts for first-time setup, weekly inbox triage, backfill, dry runs, fix-wrong-labels |
-| `examples/minimal/` | 10-brand rules file for a quick dry-run |
-| `examples/scheduling/` | launchd, cron, and GitHub Actions templates for Sunday triage |
-| `scripts/generate_filters.py` | Deterministic `gmail-filters.xml` generator |
-| `scripts/validate_rules.py` | Lint `provider-rules.md` before generating filters |
-| Generated `gmail-filters.xml` | One Gmail import to label existing mail and auto-file future mail |
+| Deliverable                             | What it does                                                                                       |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `SKILL.md`                              | Step-by-step method the agent follows on every run                                                 |
+| `references/provider-rules.template.md` | Starter sender-to-label table across banking, grocery, subscriptions, travel, bills, and more      |
+| `references/email-policy.md`            | Category actions (keep, archive, notify, skip) and safety rules                                    |
+| `examples/prompts/`                     | Copy-paste prompts for first-time setup, weekly inbox triage, backfill, dry runs, fix-wrong-labels |
+| `examples/minimal/`                     | 10-brand rules file for a quick dry-run                                                            |
+| `examples/scheduling/`                  | launchd, cron, and GitHub Actions templates for Sunday triage                                      |
+| `scripts/generate_filters.py`           | Deterministic `gmail-filters.xml` generator                                                        |
+| `scripts/validate_rules.py`             | Lint `provider-rules.md` before generating filters                                                 |
+| Generated `gmail-filters.xml`           | One Gmail import to label existing mail and auto-file future mail                                  |
 
 After setup, a typical inbox drops from hundreds of unread threads to a short list of actionable items, with everything else filed under organised labels in the sidebar.
 
@@ -277,8 +276,8 @@ git clone https://github.com/rNLKJA/gmail-labeler.git .codex/skills/gmail-labele
 ```
 
 Restart Codex after installing so it picks up the new skill. You can also install
-via the built-in skill-installer: *"Install the skill from
-github.com/rNLKJA/gmail-labeler"*.
+via the built-in skill-installer: _"Install the skill from
+github.com/rNLKJA/gmail-labeler"_.
 
 ### Standalone
 
@@ -300,14 +299,14 @@ cp references/provider-rules.template.md references/provider-rules.md
 First-time setup **always** follows this order (full detail in
 `references/initial-setup-checklist.md`):
 
-| Step | Action |
-|---|---|
-| 0 | Load `MEMORY.md`, policy, rules; `list_labels` |
-| 1 | **Create master categories** (all taxonomy masters by default) |
-| 2 | **Analyse mail** — domain dedupe, classify senders, build label plan |
-| 3 | **Create provider children** (`Shopping/Amazon`, etc.) |
-| 4 | **Apply labels** + archive noise; keep records in inbox |
-| 5–6 | Save rules, generate and import `gmail-filters.xml` |
+| Step | Action                                                               |
+| ---- | -------------------------------------------------------------------- |
+| 0    | Load `MEMORY.md`, policy, rules; `list_labels`                       |
+| 1    | **Create master categories** (all taxonomy masters by default)       |
+| 2    | **Analyse mail** — domain dedupe, classify senders, build label plan |
+| 3    | **Create provider children** (`Shopping/Amazon`, etc.)               |
+| 4    | **Apply labels** + archive noise; keep records in inbox              |
+| 5–6  | Save rules, generate and import `gmail-filters.xml`                  |
 
 Masters exist **before** any mail analysis. Never create nested labels before their
 master parent.
@@ -323,16 +322,16 @@ After pulling updates:
 
 ## Parameters
 
-| Parameter | Default | Example scope |
-|---|---|---|
-| `lookback_days` | **`90`** (3 months) | `newer_than:90d -in:sent -in:chats -in:draft` |
-| `catch_up_days` | `7` | `has:nouserlabels newer_than:7d …` (opt-in) |
-| `max_threads` | unlimited | Cap pagination (suggest **50** for dry runs) |
-| `dry_run` | `true` on first scope | No Gmail mutations when true |
+| Parameter       | Default               | Example scope                                 |
+| --------------- | --------------------- | --------------------------------------------- |
+| `lookback_days` | **`90`** (3 months)   | `newer_than:90d -in:sent -in:chats -in:draft` |
+| `catch_up_days` | `7`                   | `has:nouserlabels newer_than:7d …` (opt-in)   |
+| `max_threads`   | unlimited             | Cap pagination (suggest **50** for dry runs)  |
+| `dry_run`       | `true` on first scope | No Gmail mutations when true                  |
 
 Optional `config.yaml` — copy from `config.yaml.example`. Prompt parameters override the file.
 
-Natural language: *"last 3 months"* → `lookback_days: 90`. Widen to `365` only if you need a full year.
+Natural language: _"last 3 months"_ → `lookback_days: 90`. Widen to `365` only if you need a full year.
 
 ### Try in 10 minutes
 
@@ -393,11 +392,11 @@ See also: `examples/prompts/weekly-triage.md`, `examples/prompts/fix-wrong-label
 
 Three options — pick one:
 
-| Method | File | When |
-|---|---|---|
-| macOS launchd | `examples/scheduling/launchd/com.rNLKJA.gmail-labeler.weekly.plist` | Sundays 09:00 local |
-| cron | `examples/scheduling/cron/crontab.example` | Sundays 09:00 |
-| GitHub Actions | `examples/scheduling/github-actions/weekly-triage.yml` | Sundays 09:00 UTC (advanced) |
+| Method         | File                                                                | When                         |
+| -------------- | ------------------------------------------------------------------- | ---------------------------- |
+| macOS launchd  | `examples/scheduling/launchd/com.rNLKJA.gmail-labeler.weekly.plist` | Sundays 09:00 local          |
+| cron           | `examples/scheduling/cron/crontab.example`                          | Sundays 09:00                |
+| GitHub Actions | `examples/scheduling/github-actions/weekly-triage.yml`              | Sundays 09:00 UTC (advanced) |
 
 Each file notes the assumptions it makes (CLI binary, env vars, MCP endpoint).
 You need a working agent CLI (`cursor-agent`, `claude`, `codex`, or equivalent) on PATH.
@@ -413,15 +412,15 @@ You need a working agent CLI (`cursor-agent`, `claude`, `codex`, or equivalent) 
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-|---|---|---|
-| OAuth / MCP auth fails | Missing `gcp-oauth.keys.json` | [Gmail MCP setup](#gmail-mcp-setup-about-5-minutes) |
-| `validate_rules.py` errors | Typo in rules table | Fix `Domain` / `Default` / duplicate rows; re-run validator |
-| 0 threads on returning run | Filters working; inbox empty | Expected for inbox-zero; use catch-up only when you ask |
-| Duplicate filters after re-import | Gmail merges by criteria | Delete old filters in Gmail or diff XML before import |
-| Wrong labels on PayPal merchants | One domain, many merchants | Use fix-wrong-labels mode; `content_type` + subject in rules |
-| Generator "no rules parsed" | Empty or malformed table | Ensure `\| Domain \|` header and rows before `## Always skip` |
-| CI / version mismatch | SKILL vs VERSION.md drift | Keep frontmatter `version:` in sync with `VERSION.md` |
+| Symptom                           | Likely cause                  | Fix                                                           |
+| --------------------------------- | ----------------------------- | ------------------------------------------------------------- |
+| OAuth / MCP auth fails            | Missing `gcp-oauth.keys.json` | [Gmail MCP setup](#gmail-mcp-setup-about-5-minutes)           |
+| `validate_rules.py` errors        | Typo in rules table           | Fix `Domain` / `Default` / duplicate rows; re-run validator   |
+| 0 threads on returning run        | Filters working; inbox empty  | Expected for inbox-zero; use catch-up only when you ask       |
+| Duplicate filters after re-import | Gmail merges by criteria      | Delete old filters in Gmail or diff XML before import         |
+| Wrong labels on PayPal merchants  | One domain, many merchants    | Use fix-wrong-labels mode; `content_type` + subject in rules  |
+| Generator "no rules parsed"       | Empty or malformed table      | Ensure `\| Domain \|` header and rows before `## Always skip` |
+| CI / version mismatch             | SKILL vs VERSION.md drift     | Keep frontmatter `version:` in sync with `VERSION.md`         |
 
 ## Optional regional packs
 
@@ -431,30 +430,30 @@ They are examples only — not loaded automatically.
 
 ## Files
 
-| File | Purpose |
-|---|---|
-| `SKILL.md` | The method — read first by the agent (v1.3.1) |
-| `README.md` | This file |
-| `VERSION.md` | Feature matrix and current version |
-| `CHANGELOG.md` | Release history |
-| `CONTRIBUTING.md` | How to contribute and run local checks |
-| `LICENSE` | GPL-3.0 |
-| `scripts/generate_filters.py` | Rules → `gmail-filters.xml` + `email-receive-rules.md` |
-| `scripts/validate_rules.py` | Lint provider rules before generation |
-| `scripts/build-skill.sh` | Rebuild `email-labeler.skill` zip |
-| `references/run-modes.md` | Run modes, parameters, fix-wrong-labels |
-| `references/initial-setup-checklist.md` | First-time setup checklist (masters before analysis) |
-| `references/token-efficiency.md` | Domain dedupe, max_threads, filter strategy |
-| `references/email-policy.md` | Category actions and safety rules |
-| `references/provider-rules.template.md` | Starter sender→label table (~200 rules) |
-| `templates/taxonomy-au.md` | Optional AU regional taxonomy |
-| `templates/taxonomy-us.md` | Optional US regional taxonomy |
-| `config.yaml.example` | Optional run defaults |
-| `MEMORY.template.md` | Scaffold for account-specific precedents |
-| `LOG.template.md` | Scaffold for run history |
-| `examples/prompts/` | First-time, weekly, backfill, dry-run, fix-wrong-labels |
-| `examples/minimal/` | 10-brand quickstart rules |
-| `examples/scheduling/` | launchd, cron, GitHub Actions templates |
+| File                                    | Purpose                                                 |
+| --------------------------------------- | ------------------------------------------------------- |
+| `SKILL.md`                              | The method — read first by the agent (v1.3.1)           |
+| `README.md`                             | This file                                               |
+| `VERSION.md`                            | Feature matrix and current version                      |
+| `CHANGELOG.md`                          | Release history                                         |
+| `CONTRIBUTING.md`                       | How to contribute and run local checks                  |
+| `LICENSE`                               | GPL-3.0                                                 |
+| `scripts/generate_filters.py`           | Rules → `gmail-filters.xml` + `email-receive-rules.md`  |
+| `scripts/validate_rules.py`             | Lint provider rules before generation                   |
+| `scripts/build-skill.sh`                | Rebuild `email-labeler.skill` zip                       |
+| `references/run-modes.md`               | Run modes, parameters, fix-wrong-labels                 |
+| `references/initial-setup-checklist.md` | First-time setup checklist (masters before analysis)    |
+| `references/token-efficiency.md`        | Domain dedupe, max_threads, filter strategy             |
+| `references/email-policy.md`            | Category actions and safety rules                       |
+| `references/provider-rules.template.md` | Starter sender→label table (~200 rules)                 |
+| `templates/taxonomy-au.md`              | Optional AU regional taxonomy                           |
+| `templates/taxonomy-us.md`              | Optional US regional taxonomy                           |
+| `config.yaml.example`                   | Optional run defaults                                   |
+| `MEMORY.template.md`                    | Scaffold for account-specific precedents                |
+| `LOG.template.md`                       | Scaffold for run history                                |
+| `examples/prompts/`                     | First-time, weekly, backfill, dry-run, fix-wrong-labels |
+| `examples/minimal/`                     | 10-brand quickstart rules                               |
+| `examples/scheduling/`                  | launchd, cron, GitHub Actions templates                 |
 
 Working copies (`MEMORY.md`, `LOG.md`, `references/provider-rules.md`) are
 created locally and git-ignored.
@@ -469,10 +468,10 @@ download, open, or read attachment contents. It does **not** send, reply,
 forward, or delete mail. It only changes labels (including removing `INBOX` to
 archive).
 
-| | Reads | Modifies |
-|---|---|---|
-| **CAN** | Sender, subject, snippet, body, label IDs, attachment filenames | Add labels, remove INBOX, create labels |
-| **MUST NOT** | Attachment contents (PDFs, images, docs) | UNREAD, STARRED, content, recipients; send/reply/delete |
+|              | Reads                                                           | Modifies                                                |
+| ------------ | --------------------------------------------------------------- | ------------------------------------------------------- |
+| **CAN**      | Sender, subject, snippet, body, label IDs, attachment filenames | Add labels, remove INBOX, create labels                 |
+| **MUST NOT** | Attachment contents (PDFs, images, docs)                        | UNREAD, STARRED, content, recipients; send/reply/delete |
 
 ### Local personal data
 

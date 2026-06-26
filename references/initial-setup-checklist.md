@@ -14,15 +14,15 @@ where noted.
 
 ## Checklist
 
-| Step | Action | Gmail writes? | Dry run |
-|---|---|---|---|
-| **0** | Load `config.yaml` (if present), `MEMORY.md`, `references/email-policy.md`, `references/provider-rules.md` (or templates if missing). Call `list_labels` and build name→ID map. | No | Yes |
-| **1** | **Create master categories** — plain names, no `/`. See [Step 1](#step-1--create-master-categories-always-first) below. Refresh `list_labels`. | Yes (unless dry run) | Report only |
-| **2** | **Analyse mail** — `search_threads` in scope (`lookback_days`, default 90). Domain dedupe: classify each distinct sender domain once. Build sender→label plan and draft `provider-rules.md`. | No (read only) | Yes |
-| **3** | **Create provider children** — every planned `Parent/Provider` label in one batch. Masters from Step 1 must already exist. Refresh `list_labels`. | Yes (unless dry run) | Report only |
-| **4** | **Apply labels** — `label_thread` / archive on gaps only. Rule-satisfied skip. Never touch `UNREAD` or `STARRED`. | Yes (unless dry run) | Report only |
-| **5** | **Persist** — write `provider-rules.md`, append `LOG.md`, record precedents in `MEMORY.md`. | Local files | Yes |
-| **6** | **Generate filters** — `python scripts/generate_filters.py references/provider-rules.md --output-dir <dir> --log-summary`. Remind user to import `gmail-filters.xml` (Settings → Filters → Import → Apply to existing conversations). | Local files | Yes |
+| Step  | Action                                                                                                                                                                                                                                | Gmail writes?        | Dry run     |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ----------- |
+| **0** | Load `config.yaml` (if present), `MEMORY.md`, `references/email-policy.md`, `references/provider-rules.md` (or templates if missing). Call `list_labels` and build name→ID map.                                                       | No                   | Yes         |
+| **1** | **Create master categories** — plain names, no `/`. See [Step 1](#step-1--create-master-categories-always-first) below. Refresh `list_labels`.                                                                                        | Yes (unless dry run) | Report only |
+| **2** | **Analyse mail** — `search_threads` in scope (`lookback_days`, default 90). Domain dedupe: classify each distinct sender domain once. Build sender→label plan and draft `provider-rules.md`.                                          | No (read only)       | Yes         |
+| **3** | **Create provider children** — every planned `Parent/Provider` label in one batch. Masters from Step 1 must already exist. Refresh `list_labels`.                                                                                     | Yes (unless dry run) | Report only |
+| **4** | **Apply labels** — `label_thread` / archive on gaps only. Rule-satisfied skip. Never touch `UNREAD` or `STARRED`.                                                                                                                     | Yes (unless dry run) | Report only |
+| **5** | **Persist** — write `provider-rules.md`, append `LOG.md`, record precedents in `MEMORY.md`.                                                                                                                                           | Local files          | Yes         |
+| **6** | **Generate filters** — `python scripts/generate_filters.py references/provider-rules.md --output-dir <dir> --log-summary`. Remind user to import `gmail-filters.xml` (Settings → Filters → Import → Apply to existing conversations). | Local files          | Yes         |
 
 Default **`dry_run: true`** on first scope: complete Steps 0–2 and report Steps 1,
 3, and 4 plans; no Gmail mutations until the user confirms.
@@ -35,11 +35,11 @@ Run **before** any mail scan used for classification (Step 2).
 
 **Which masters to create:**
 
-| Setting | Masters created in Step 1 |
-|---|---|
-| **First-time default** | All masters from the taxonomy table in `SKILL.md` → Master label taxonomy |
-| `create_all_masters: true` in `MEMORY.md` or `config.yaml` | Same — full taxonomy table |
-| `create_all_masters: false` | Masters listed in `MEMORY.md` under standing decisions, **plus** any custom regional masters from `templates/taxonomy-*.md` the user copied in. If none listed, fall back to **full taxonomy** on first-time setup |
+| Setting                                                    | Masters created in Step 1                                                                                                                                                                                          |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **First-time default**                                     | All masters from the taxonomy table in `SKILL.md` → Master label taxonomy                                                                                                                                          |
+| `create_all_masters: true` in `MEMORY.md` or `config.yaml` | Same — full taxonomy table                                                                                                                                                                                         |
+| `create_all_masters: false`                                | Masters listed in `MEMORY.md` under standing decisions, **plus** any custom regional masters from `templates/taxonomy-*.md` the user copied in. If none listed, fall back to **full taxonomy** on first-time setup |
 
 **Rules:**
 

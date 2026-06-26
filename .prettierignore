@@ -1,0 +1,9 @@
+# Templates carry deliberate hand-authored layout
+templates/
+references/provider-rules.template.md
+tests/fixtures/
+
+# Binaries
+*.png
+
+_archive/

@@ -41,6 +41,7 @@ sensitive (receipts, 2FA prompts, personal correspondence). Treat every run as
 handling private data.
 
 **What the skill reads:**
+
 - Sender address and display name
 - Subject, snippet, and message body text
 - Label IDs on each thread
@@ -48,6 +49,7 @@ handling private data.
   "this thread has `Receipt-2026-05-24.pdf` attached")
 
 **What the skill MUST NOT read:**
+
 - Attachment **contents** — never download, open, decode, parse, OCR, or summarise
   PDFs, images, documents, or spreadsheets. Filename only; content never.
 - If the substance of the email lives in an attachment, flag it to the user
@@ -55,11 +57,13 @@ handling private data.
   permission** before doing anything with the file.
 
 **What the skill CAN modify:**
+
 - Add labels to threads
 - Remove the `INBOX` label (= archive)
 - Create new labels
 
 **What the skill MUST NOT modify:**
+
 - Read state (`UNREAD`) — do not mark things read
 - Star state (`STARRED`)
 - Importance flags
@@ -67,6 +71,7 @@ handling private data.
 - Never send, forward, reply, or delete mail
 
 **Skip-by-design senders (no label, no archive):**
+
 - OTP / one-time-code mail ("Your … code is 123456")
 - Login-verification mail
 - Security alerts requiring no action
@@ -89,14 +94,14 @@ order. **Master categories are created first; mail analysis happens after.**
 
 ### Initial setup checklist (summary)
 
-| Step | What |
-|---|---|
-| **0** | Load memory, policy, rules, `list_labels` |
-| **1** | **Create master categories** (always first) → refresh `list_labels` |
-| **2** | **Analyse mail** — domain dedupe, classify, build sender→label plan |
-| **3** | **Create provider children** (`Parent/Provider`) → refresh `list_labels` |
-| **4** | **Apply labels** to gaps only (rule-satisfied skip) |
-| **5–6** | Persist rules, generate `gmail-filters.xml`, remind user to import |
+| Step    | What                                                                     |
+| ------- | ------------------------------------------------------------------------ |
+| **0**   | Load memory, policy, rules, `list_labels`                                |
+| **1**   | **Create master categories** (always first) → refresh `list_labels`      |
+| **2**   | **Analyse mail** — domain dedupe, classify, build sender→label plan      |
+| **3**   | **Create provider children** (`Parent/Provider`) → refresh `list_labels` |
+| **4**   | **Apply labels** to gaps only (rule-satisfied skip)                      |
+| **5–6** | Persist rules, generate `gmail-filters.xml`, remind user to import       |
 
 Never interleave `create_label` with `label_thread`. Never create a nested child
 before its master exists. Default **dry run** until user confirms Steps 1, 3, and 4.
@@ -133,8 +138,8 @@ applies to:
 - **Returning runs** (inbox-only scope)
 - **First-time setup / backfill** within the cutoff window (`newer_than:90d`, etc.)
 
-The cutoff defines *which mail to consider*; rule-satisfied skip defines *which
-threads within that window still need work*. A thread labeled correctly last week
+The cutoff defines _which mail to consider_; rule-satisfied skip defines _which
+threads within that window still need work_. A thread labeled correctly last week
 inside a `newer_than:{lookback_days}d` scan is skipped, not re-processed.
 
 **Wrong or partial labels:** if the thread has a different provider label but not
@@ -180,19 +185,19 @@ When a new provider needs a label mid-run: create the master first (if missing),
 refresh `list_labels`, then create the child — same master-before-child rule, but
 one provider at a time is OK.
 
-| Master label | Typical children |
-|---|---|
-| `Shopping` | `Shopping/Amazon`, `Shopping/eBay` |
+| Master label    | Typical children                                |
+| --------------- | ----------------------------------------------- |
+| `Shopping`      | `Shopping/Amazon`, `Shopping/eBay`              |
 | `Subscriptions` | `Subscriptions/Spotify`, `Subscriptions/Notion` |
-| `News & Ads` | `News & Ads/TLDR`, `News & Ads/Apple` |
-| `Banking` | `Banking/PayPal`, `Banking/Chase` |
-| `Bills` | `Bills/Origin`, `Bills/Telstra` |
-| `Travel` | `Travel/Qantas`, `Travel/Uber` |
-| `Government` | `Government/ATO`, `Government/USCIS` |
-| `Health` | `Health/Bupa`, `Health/Medicare` |
-| `Career` | `Career/LinkedIn`, `Career/Indeed` |
-| `Education` | `Education/Coursera`, `Education/MIT` |
-| `Property` | `Property/Domain`, `Property/Realestate.com.au` |
+| `News & Ads`    | `News & Ads/TLDR`, `News & Ads/Apple`           |
+| `Banking`       | `Banking/PayPal`, `Banking/Chase`               |
+| `Bills`         | `Bills/Origin`, `Bills/Telstra`                 |
+| `Travel`        | `Travel/Qantas`, `Travel/Uber`                  |
+| `Government`    | `Government/ATO`, `Government/USCIS`            |
+| `Health`        | `Health/Bupa`, `Health/Medicare`                |
+| `Career`        | `Career/LinkedIn`, `Career/Indeed`              |
+| `Education`     | `Education/Coursera`, `Education/MIT`           |
+| `Property`      | `Property/Domain`, `Property/Realestate.com.au` |
 
 Users may rename or extend masters in `MEMORY.md` (e.g. regional groupings). Read
 `MEMORY.md` before Step 1.
@@ -235,12 +240,12 @@ empty leftover and set colours themselves.
 Read `references/run-modes.md` for the full parameter table, scopes, dry-run
 rules, **fix-wrong-labels** mode, and optional `config.yaml`.
 
-| Parameter | Default | Notes |
-|---|---|---|
-| `lookback_days` | **90** | First-time, backfill, fix-wrong-labels |
-| `catch_up_days` | **7** | Opt-in catch-up |
-| `max_threads` | unlimited | Cap pagination; suggest **50** for dry runs |
-| `dry_run` | true on first scope | No Gmail mutations when true |
+| Parameter       | Default             | Notes                                       |
+| --------------- | ------------------- | ------------------------------------------- |
+| `lookback_days` | **90**              | First-time, backfill, fix-wrong-labels      |
+| `catch_up_days` | **7**               | Opt-in catch-up                             |
+| `max_threads`   | unlimited           | Cap pagination; suggest **50** for dry runs |
+| `dry_run`       | true on first scope | No Gmail mutations when true                |
 
 ## Token efficiency
 
@@ -299,12 +304,12 @@ Full guide: `references/token-efficiency.md`
      report instead of guessing.
 
 5. **Classify content type → archive decision.** This is the key split:
-   - **Keep in inbox (do NOT archive)** — financial and account *records*:
+   - **Keep in inbox (do NOT archive)** — financial and account _records_:
      receipts, invoices, payment confirmations, order/booking/shipping
      confirmations, statements, tax documents, membership/renewal status,
-     password-changed and security-alert notices. Signals: words like *receipt,
+     password-changed and security-alert notices. Signals: words like _receipt,
      invoice, payment, order confirmation, your order, statement, booking,
-     itinerary, has shipped, renewal, your subscription*; senders like
+     itinerary, has shipped, renewal, your subscription_; senders like
      `invoice@`, `billing@`, `orders@`, `receipts@`, `service@paypal`.
    - **Archive after labeling** — marketing and reading-pile noise: promotions,
      sales, "% off", newsletters, digests, product announcements, win-back ("sorry
@@ -318,7 +323,7 @@ Full guide: `references/token-efficiency.md`
      provider (case-insensitive, ignoring punctuation/spacing — `Youtube` ==
      `YouTube`, `Paypal` == `PayPal`), use it, wherever it lives in the tree.
    - **If no label exists, create one** under the parent that fits the content
-     type. File by what the mail *is*, not just who sent it:
+     type. File by what the mail _is_, not just who sent it:
      - **`Shopping/<Provider>`** — retail/e-commerce purchases and store marketing
        from shops the user buys from (orders, receipts, sale emails). NOT
        memberships or recurring subscriptions.
@@ -334,9 +339,9 @@ Full guide: `references/token-efficiency.md`
      - **`Career/<Provider>`** — job alerts, recruiters.
      - **`Education/<Provider>`** — universities, courses, learning platforms.
      - **`Property/<Provider>`** — agents, listings, rental management (optional).
-     - A single brand can span parents by content type: e.g. a YouTube *purchase*
-       → `Shopping/YouTube`, a YouTube *membership* → `Subscriptions/YouTube`;
-       an Apple Store *order* → `Shopping/Apple`, Apple *marketing* →
+     - A single brand can span parents by content type: e.g. a YouTube _purchase_
+       → `Shopping/YouTube`, a YouTube _membership_ → `Subscriptions/YouTube`;
+       an Apple Store _order_ → `Shopping/Apple`, Apple _marketing_ →
        `News & Ads/Apple`.
    - **Ensure the master parent exists** (create `Parent` alone if missing), then
      create the child with `create_label` using the full `Parent/Provider` display
@@ -350,15 +355,15 @@ Full guide: `references/token-efficiency.md`
    the inbox as a record.
 
 8. **Apply.** `label_thread` with the chosen label ID. Then, if step 5 said
-   archive *and* the thread still carries `INBOX`, `unlabel_thread` the `INBOX`
+   archive _and_ the thread still carries `INBOX`, `unlabel_thread` the `INBOX`
    label. Never touch `UNREAD` (don't mark things read) or `STARRED`.
 
 9. **Report** (see format below).
 
 10. **Persist.** Append a dated entry to `LOG.md` (scope, labels created, threads
-   filed, skips, coverage). If you created any new labels or decided a novel case,
-   add the new domains to `references/provider-rules.md` and record the precedent
-   in `MEMORY.md`.
+    filed, skips, coverage). If you created any new labels or decided a novel case,
+    add the new domains to `references/provider-rules.md` and record the precedent
+    in `MEMORY.md`.
 
 11. **Refresh the Gmail receive rules.** When `provider-rules.md` changed this run,
     run:
@@ -477,7 +482,7 @@ new mail. Within any cutoff window, **rule-satisfied skip** avoids re-touching
 mail that already matches `provider-rules.md`. The worst outcomes are
 (a) creating duplicate/oddly-placed labels that clutter the taxonomy, (b) archiving
 something the user needed to see, and (c) re-touching labeled mail on every sweep.
-That's why the skill leans hard on *existing* labels, skips already-filed threads,
+That's why the skill leans hard on _existing_ labels, skips already-filed threads,
 files new ones under sensible parents, keeps financial records in the inbox by
 default, and reports every new label and every skip so nothing happens invisibly. The starter rules file is a convenience, not a
 crutch — the classification reasoning is the real engine and stands on its own if
