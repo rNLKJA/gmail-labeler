@@ -2,39 +2,54 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, revive/web]
   pull_request:
-    branches: [main, master]
+    branches: [main]
 
 jobs:
-  validate:
+  ci:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate provider-rules template
-        run: python3 scripts/validate_rules.py references/provider-rules.template.md
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-      - name: Validate test fixture
-        run: python3 scripts/validate_rules.py tests/fixtures/provider-rules.fixture.md
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.1
 
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Run unit tests
-        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
-
-  smoke:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build skill zip
-        run: bash scripts/build-skill.sh -o /tmp/email-labeler.skill
-
-      - name: Verify zip contents
+      - name: Get pnpm store directory
+        shell: bash
         run: |
-          unzip -l /tmp/email-labeler.skill | grep -q 'email-labeler/SKILL.md'
-          unzip -l /tmp/email-labeler.skill | grep -q 'email-labeler/VERSION.md'
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
