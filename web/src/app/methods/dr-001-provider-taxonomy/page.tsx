@@ -30,7 +30,7 @@ export default async function DR001Page() {
           Back to Methods
         </Link>
 
-        <article className="prose dark:prose-invert max-w-none">
+        <article className="prose dark:prose-invert max-w-none prose-pre:overflow-x-auto prose-pre:max-w-full prose-code:break-words">
           <div dangerouslySetInnerHTML={{ __html: content }} />
         </article>
       </div>

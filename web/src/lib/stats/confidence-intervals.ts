@@ -105,6 +105,7 @@ export function entropy(distribution: Record<string, number>): number {
 
 /**
  * Get z-score for given confidence level
+ * Supports 0.90, 0.95, 0.99, 0.999; other values fall back to 0.95 (z=1.96)
  */
 function getZScore(confidence: number): number {
   // Common z-scores
