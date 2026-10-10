@@ -3,7 +3,7 @@
 @theme inline {
   /* Fonts */
   --font-sans: var(--font-inter);
-  --font-mono: var(--font-mono);
+  --font-mono: var(--font-jetbrains-mono);
 
   /* Gmail red accent */
   --color-gmail-red: #ea4335;
