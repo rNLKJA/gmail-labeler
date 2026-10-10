@@ -1,149 +1,223 @@
-# Gmail Labeler Skill
+# Gmail Labeler Skill (Original)
 
-This directory contains the original Gmail Labeler skill — an AI agent skill for triaging Gmail by provider domain.
+This directory contains the original Gmail Labeler skill files, preserved with full git history after being moved from the repository root.
 
-## What is this?
+## What's Inside
 
-Gmail Labeler is a skill for Claude Code, Cursor, and similar AI coding agents that automatically:
-- Searches your Gmail threads
-- Classifies senders by provider type (Social, Commerce, Government, Finance, Marketing, etc.)
-- Applies nested labels like `Shopping/Amazon`, `Finance/PayPal`, `Government/ATO`
-- Archives marketing/newsletters while keeping receipts and bills in the inbox
+- `.agents/skills/gmail-labeler/` - The complete skill implementation
+  - `SKILL.md` - Main skill definition and workflow documentation
+  - `references/` - Provider rules templates, setup checklists, token efficiency guides
+  - `scripts/` - Helper scripts for filter generation and rule validation
+  - `templates/` - Provider taxonomy templates (AU, US, UK variants)
 
-The skill uses a Gmail MCP (Model Context Protocol) connector to interact with your mailbox.
+## Installation
 
-## Structure
+### Prerequisites
 
-```
-.agents/skills/gmail-labeler/
-├── SKILL.md                    Main skill definition (what the agent reads)
-├── references/
-│   ├── provider-rules.template.md    Starter sender→label mapping (~200 rules)
-│   ├── email-policy.md              Category actions (keep/archive/skip)
-│   ├── initial-setup-checklist.md   First-time setup workflow
-│   ├── run-modes.md                 Run modes and parameters
-│   └── token-efficiency.md          Optimization strategies
-├── examples/
-│   ├── prompts/                     Copy-paste prompts for various scenarios
-│   ├── minimal/                     Quickstart with 10 brands
-│   └── scheduling/                  Cron, launchd, GitHub Actions templates
-├── templates/
-│   ├── taxonomy-au.md               Australian provider taxonomy
-│   └── taxonomy-us.md               US provider taxonomy
-├── scripts/
-│   ├── generate_filters.py          Rules → gmail-filters.xml converter
-│   ├── validate_rules.py            Lint provider-rules.md
-│   └── build-skill.sh               Package skill as .skill zip
-└── tests/                           Validation tests
-```
+1. **Gmail MCP Server** - Install a Gmail MCP connector:
+   ```bash
+   # Example using a community Gmail MCP server
+   npm install -g @modelcontextprotocol/server-gmail
+   ```
 
-## Installation (for using the skill)
+2. **Gmail API Credentials** - Create a Google Cloud project and enable Gmail API:
+   - Go to [Google Cloud Console](https://console.cloud.google.com)
+   - Create a new project
+   - Enable Gmail API
+   - Create OAuth 2.0 credentials (Desktop app)
+   - Download credentials JSON
 
-### Claude Code / Claude Desktop
+3. **Claude Code or Cursor** - AI coding assistant with MCP support
 
-```bash
-# User-wide installation
-git clone https://github.com/rNLKJA/gmail-labeler.git ~/.claude/skills/gmail-labeler
-```
+### Setup Steps
 
-### Cursor
+1. **Copy the skill to your agents directory:**
+   ```bash
+   mkdir -p ~/.agents/skills
+   cp -r .agents/skills/gmail-labeler ~/.agents/skills/
+   ```
 
-```bash
-# User-wide installation  
-git clone https://github.com/rNLKJA/gmail-labeler.git ~/.cursor/skills/gmail-labeler
-```
+2. **Configure MCP server** in your Claude Code or Cursor settings:
+   ```json
+   {
+     "mcpServers": {
+       "gmail": {
+         "command": "npx",
+         "args": ["-y", "@modelcontextprotocol/server-gmail"],
+         "env": {
+           "GOOGLE_CREDENTIALS": "/path/to/credentials.json"
+         }
+       }
+     }
+   }
+   ```
 
-### Initialize working files
+3. **First run - DRY RUN:**
+   ```
+   User: "Label my inbox (dry run mode)"
+   ```
+   
+   The skill will:
+   - Analyze your inbox
+   - Show what labels it would create
+   - Show which emails would be labeled
+   - Wait for your confirmation before making changes
 
-These files hold your personal data and are git-ignored:
-
-```bash
-cd ~/.claude/skills/gmail-labeler  # or ~/.cursor/skills/gmail-labeler
-cp MEMORY.template.md MEMORY.md
-cp LOG.template.md LOG.md
-cp references/provider-rules.template.md references/provider-rules.md
-```
-
-## Gmail MCP Setup (required)
-
-The skill requires a Gmail MCP connector:
-
-1. **Create Google Cloud OAuth client** (Desktop app), download JSON keys
-2. **Save keys** to `~/.gmail-mcp/gcp-oauth.keys.json`
-3. **Add MCP server** to your agent config:
-   - **Cursor:** `~/.cursor/mcp.json` — package `@gongrzhe/server-gmail-autoauth-mcp`
-   - **Claude Code:** `~/.claude/mcp.json` (same package)
-4. **Authenticate:** `npx @gongrzhe/server-gmail-autoauth-mcp auth`
-5. **Reload MCP** in your agent and verify with `list_labels`
-
-## Usage
-
-First run (dry run):
-
-```text
-Run the gmail-labeler skill in first-time setup mode.
-Follow references/initial-setup-checklist.md in order (masters before analysis).
-lookback_days: 90
-Scope: newer_than:90d -in:sent -in:chats -in:draft
-Dry run: true
-Goal: Step 1 masters, Step 2 analyse, report Steps 3–4 before applying.
-```
-
-Weekly triage:
-
-```text
-Run the gmail-labeler skill in returning-run mode.
-Scope: in:inbox -in:sent -in:chats -in:draft
-Dry run: false
-Skip rule-satisfied threads. Only label gaps.
-```
-
-See `examples/prompts/` for more scenarios.
+4. **Review the plan**, then run for real:
+   ```
+   User: "Apply those labels for real"
+   ```
 
 ## How It Works
 
-1. **Load rules** from `provider-rules.md` (sender domain → label mapping)
-2. **Search Gmail** via MCP connector (respects lookback_days parameter)
-3. **Classify each thread** by sender domain against provider taxonomy
-4. **Apply labels** and optionally archive based on category policy
-5. **Generate Gmail filters** (`gmail-filters.xml`) for future automation
-6. **Log results** to `LOG.md`
+The Gmail Labeler skill follows a systematic workflow:
 
-## Key Features
+1. **Domain Analysis** - Scans your inbox and identifies distinct sender domains
+2. **Classification** - Matches domains against provider rules (Banking, Shopping, etc.)
+3. **Label Creation** - Creates master category labels (e.g., "Banking") and provider labels (e.g., "Banking/PayPal")
+4. **Labeling** - Applies labels to threads, skipping any already correctly labeled
+5. **Archiving** - Optionally archives marketing/newsletter mail while keeping receipts in inbox
+6. **Filter Generation** - Creates Gmail filter XML you can import for automatic future labeling
 
-- **Provider taxonomy**: 20+ provider types covering social, commerce, government, finance, health, utilities, travel, and more
-- **Rule conflict detection**: Validates provider-rules.md for duplicates and conflicts
-- **Dry-run mode**: Preview actions without mutating Gmail
-- **Token-efficient**: Domain deduplication, snippet-only reads, rule-satisfied skip
-- **Filter generation**: Generates importable Gmail filters from rules
-- **Privacy-focused**: No hosted backend, rules live locally, MCP connector handles auth
+## Provider Taxonomy
 
-## Privacy & Security
+The skill includes 10+ categories with 100+ pre-defined rules:
 
-**What the skill reads:**
-- Sender, subject, snippet, message body
-- Label IDs
-- Attachment filenames (NOT contents)
+- **Banking** - Banks, payment processors, crypto exchanges
+- **Shopping** - E-commerce, retail, food delivery
+- **Subscriptions** - Streaming services, SaaS tools
+- **Bills** - Utilities, energy, telecom
+- **Government** - Tax, immigration, public services
+- **Health** - Insurance, pharmacies, medical
+- **Travel** - Airlines, hotels, ride-sharing
+- **Career** - Job boards, professional networks
+- **News & Ads** - Newsletters, marketing, media
+- **Education** - Universities, online learning
 
-**What it modifies:**
-- Adds labels
-- Removes INBOX label (archives)
-- Creates new labels
+See `.agents/skills/gmail-labeler/references/` for full taxonomy templates.
 
-**What it NEVER does:**
-- Mark messages read/unread
-- Star/unstar messages
-- Delete, send, or forward mail
-- Read attachment contents
+## Safety Features
 
-All mail content is accessed through your MCP connector and may be sent to your LLM provider. This repository does not host, see, or store your mail.
+**What the skill DOES:**
+- ✅ Reads sender, subject, and message body for classification
+- ✅ Creates Gmail labels
+- ✅ Applies labels to threads
+- ✅ Archives messages (removes INBOX label) based on rules
+- ✅ Logs all actions to `LOG.md`
+
+**What the skill NEVER does:**
+- ❌ Deletes mail
+- ❌ Sends or forwards mail
+- ❌ Marks mail as read
+- ❌ Reads attachment contents (only filenames)
+- ❌ Changes star state or importance flags
+
+**Privacy considerations:**
+- Email content is sent to your AI provider (Anthropic, OpenAI, etc.) for classification
+- No data is sent to third parties beyond your chosen AI provider
+- All processing happens through your local MCP server
+- Dry-run mode shows exactly what will happen before making changes
+
+## Run Modes
+
+The skill supports four run modes:
+
+1. **First-time setup** - Full inbox analysis and labeling
+2. **Returning run** - Inbox-only, quick triage of new mail
+3. **Backfill / gap-fill** - Process older mail (specify time range)
+4. **Fix wrong labels** - Correct misclassified mail
+
+See `.agents/skills/gmail-labeler/references/run-modes.md` for detailed workflows.
+
+## Configuration
+
+Optional `config.yaml` for customization:
+
+```yaml
+# Default action for each category
+categories:
+  Banking:
+    defaultAction: keep
+  Shopping:
+    defaultAction: archive
+  Subscriptions:
+    defaultAction: archive
+
+# Maximum threads to process per run
+max_threads: 500
+
+# Lookback period for initial setup
+lookback_days: 90
+```
+
+## Troubleshooting
+
+**"No MCP server found"**
+- Check your MCP server configuration in Claude Code/Cursor settings
+- Verify the Gmail MCP server is installed
+- Restart Claude Code/Cursor after configuration changes
+
+**"Authentication failed"**
+- Ensure your Google Cloud credentials are valid
+- Check that Gmail API is enabled in your project
+- Re-download credentials if expired
+
+**"Too many API calls"**
+- The skill uses domain deduplication to minimize API calls
+- For large inboxes (>10,000 threads), use `max_threads` limit
+- See `.agents/skills/gmail-labeler/references/token-efficiency.md`
+
+**"Labels not applying"**
+- Check `LOG.md` for errors
+- Verify label creation succeeded with `list_labels`
+- Ensure threads don't already have the expected label (rule-satisfied skip)
+
+## Filter Generation
+
+After labeling your inbox, generate Gmail filters for automatic future labeling:
+
+```
+User: "Generate Gmail filters from my provider rules"
+```
+
+This creates `gmail-filters.xml` that you can import:
+1. Open Gmail Settings → Filters and Blocked Addresses
+2. Click "Import filters"
+3. Upload the generated XML file
+4. Review and confirm
+
+Future mail from known providers will be labeled automatically.
+
+## Contributing
+
+See `.agents/skills/gmail-labeler/CONTRIBUTING.md` for guidelines.
+
+Contributions welcome:
+- Additional provider rules (especially non-US/non-AU providers)
+- Content type classification improvements
+- Documentation and examples
+
+## Files Reference
+
+- `SKILL.md` - Main skill definition and workflow
+- `VERSION.md` - Current version and changelog reference
+- `CHANGELOG.md` - Detailed version history
+- `MEMORY.template.md` - Session state template
+- `LOG.template.md` - Action log template
+- `config.yaml.example` - Configuration template
+- `references/provider-rules.template.md` - Full provider taxonomy
+- `references/initial-setup-checklist.md` - First-run workflow
+- `references/run-modes.md` - Run mode documentation
+- `references/token-efficiency.md` - Optimization strategies
+- `scripts/generate_filters.py` - Gmail filter XML generator
+- `scripts/validate_rules.py` - Provider rule validator
 
 ## License
 
-GPL-3.0 — Copyright (C) 2026 rNLKJA
+GPL-3.0 - See LICENSE file in repository root
 
-See `../LICENSE` for full text. Derivative works must also be GPL-3.0.
+## Support
 
-## Full Documentation
-
-See `SKILL-README.md` in this directory for the original comprehensive README.
+For issues, questions, or feature requests:
+- Open an issue on [GitHub](https://github.com/rNLKJA/gmail-labeler)
+- Read the interactive showcase at the deployed web app (see root README.md)
