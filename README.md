@@ -2,9 +2,42 @@
 
 An intelligent Gmail triage skill for AI coding assistants (Claude Code, Cursor, etc.) that automatically labels and organizes email by sender/provider. This interactive showcase demonstrates the skill's provider taxonomy, classification logic, and dry-run simulation capabilities.
 
-🚀 **[Live Demo](https://gmail-labeler-demo.vercel.app)**
+🚀 **[Live Demo](https://gmail-labeler-demo.vercel.app)** | 📽️ **[Product Tour](https://gmail-labeler-demo.vercel.app/tour)**
 
-![Gmail Labeler Showcase](https://via.placeholder.com/1200x630/ea4335/ffffff?text=Gmail+Labeler+Showcase)
+![Explore the Taxonomy](docs/showcase/workflow-1-taxonomy.gif)
+
+## Showcase
+
+### Workflow Walkthroughs
+
+**1. Explore the Taxonomy** (~23s)
+
+Browse 20+ provider types, search where domains land, and see example classification rules in action.
+
+![Taxonomy workflow](docs/showcase/workflow-1-taxonomy.gif)
+
+**2. Dry-Run Simulator** (~20s)
+
+Load sample inbox data and watch 100 threads get classified with real-time label distribution.
+
+![Simulator workflow](docs/showcase/workflow-2-simulator.gif)
+
+**3. Privacy & Governance** (~33s)
+
+Review the privacy impact assessment, failure modes, and transparent decision records.
+
+![Governance workflow](docs/showcase/workflow-3-governance.gif)
+
+### Key Features
+
+| Desktop | Mobile |
+|---------|--------|
+| ![Landing page](docs/showcase/desktop-Home.png) | ![Mobile view](docs/showcase/mobile-Home.png) |
+| **Landing page** - Feature overview and quick navigation | **Mobile-optimized** - Full functionality on 375px+ screens |
+| ![Taxonomy browser](docs/showcase/desktop-Taxonomy.png) | ![Mobile taxonomy](docs/showcase/mobile-Taxonomy.png) |
+| **Provider taxonomy** - 10+ categories, 100+ domains | **Touch-friendly** - Collapsible sections and search |
+
+Full walkthrough with MP4 videos: **[/tour page](https://gmail-labeler-demo.vercel.app/tour)**
 
 ## What is Gmail Labeler?
 
