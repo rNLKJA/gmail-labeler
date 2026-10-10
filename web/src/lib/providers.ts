@@ -143,7 +143,7 @@ export function classifySender(email: string): {
     if (r.match) {
       return email.toLowerCase().includes(r.match.toLowerCase())
     }
-    return domain.endsWith(r.domain)
+    return domain === r.domain || domain.endsWith('.' + r.domain)
   })
 
   return {

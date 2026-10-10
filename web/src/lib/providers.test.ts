@@ -46,6 +46,20 @@ describe('providers', () => {
       const result = classifySender('NOREPLY@NETFLIX.COM')
       expect(result.label).toBe('Subscriptions/Netflix')
     })
+
+    it('rejects false positive domains', () => {
+      // Should NOT match domains that merely end with the rule domain
+      expect(classifySender('fake@notamazon.com').label).toBe(null)
+      expect(classifySender('phish@fakepaypal.com').label).toBe(null)
+      expect(classifySender('test@mychase.com').label).toBe(null)
+    })
+
+    it('matches valid subdomains', () => {
+      // Should match legitimate subdomains
+      expect(classifySender('alert@subdomain.chase.com').label).toBe('Banking/Chase')
+      expect(classifySender('ship-confirm@marketplace.amazon.com').label).toBe('Shopping/Amazon')
+      expect(classifySender('service@us.paypal.com').label).toBe('Banking/PayPal')
+    })
   })
 
   describe('searchProviders', () => {
