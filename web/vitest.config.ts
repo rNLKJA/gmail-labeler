@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'node',
+    exclude: ['**/node_modules/**', '**/e2e/**', 'verify-production.spec.ts'],
   },
   resolve: {
     alias: {
