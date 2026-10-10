@@ -10,7 +10,7 @@ export const metadata = {
 }
 
 async function getDecisionRecord() {
-  const filePath = path.join(process.cwd(), '../docs/decisions/DR-003-gpl-license.md')
+  const filePath = path.join(process.cwd(), 'docs/decisions/DR-003-gpl-license.md')
   const content = fs.readFileSync(filePath, 'utf-8')
   const processed = await remark().use(html).process(content)
   return processed.toString()
