@@ -2,7 +2,7 @@
 
 An intelligent Gmail triage skill for AI coding assistants (Claude Code, Cursor, etc.) that automatically labels and organizes email by sender/provider. This interactive showcase demonstrates the skill's provider taxonomy, classification logic, and dry-run simulation capabilities.
 
-🚀 **[Live Demo](https://gmail-labeler-demo.vercel.app)** (placeholder until deployment)
+🚀 **[Live Demo](https://gmail-labeler-demo.vercel.app)**
 
 ![Gmail Labeler Showcase](https://via.placeholder.com/1200x630/ea4335/ffffff?text=Gmail+Labeler+Showcase)
 
