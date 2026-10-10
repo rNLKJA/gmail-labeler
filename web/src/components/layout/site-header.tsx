@@ -12,6 +12,8 @@ const navigation = [
   { name: 'Taxonomy', href: '/taxonomy' },
   { name: 'Playground', href: '/playground' },
   { name: 'Simulator', href: '/simulator' },
+  { name: 'Methods', href: '/methods' },
+  { name: 'Governance', href: '/governance' },
   { name: 'Installation', href: '/installation' },
   { name: 'Privacy', href: '/privacy' },
 ]
