@@ -13,7 +13,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "showcase": "playwright test e2e/showcase.spec.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -22,9 +23,12 @@
     "next-themes": "^0.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "remark": "^15.0.1",
+    "remark-html": "^16.0.1",
     "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^22.20.5",
     "@types/react": "^19",
